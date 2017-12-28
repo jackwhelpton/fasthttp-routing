@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
-	"net/http"
 	"reflect"
 	"strconv"
+
+	"github.com/valyala/fasthttp"
 )
 
 // MIME types used when doing request data reading and response data writing.
@@ -27,7 +28,7 @@ var (
 // DataReader is used by Context.Read() to read data from an HTTP request.
 type DataReader interface {
 	// Read reads from the given HTTP request and populate the specified data.
-	Read(*http.Request, interface{}) error
+	Read(*fasthttp.RequestCtx, interface{}) error
 }
 
 var (
@@ -50,24 +51,27 @@ var (
 // JSONDataReader reads the request body as JSON-formatted data.
 type JSONDataReader struct{}
 
-func (r *JSONDataReader) Read(req *http.Request, data interface{}) error {
-	return json.NewDecoder(req.Body).Decode(data)
+func (r *JSONDataReader) Read(req *fasthttp.RequestCtx, data interface{}) error {
+	return json.Unmarshal(req.PostBody(), data)
 }
 
 // XMLDataReader reads the request body as XML-formatted data.
 type XMLDataReader struct{}
 
-func (r *XMLDataReader) Read(req *http.Request, data interface{}) error {
-	return xml.NewDecoder(req.Body).Decode(data)
+func (r *XMLDataReader) Read(req *fasthttp.RequestCtx, data interface{}) error {
+	return xml.Unmarshal(req.PostBody(), data)
 }
 
 // FormDataReader reads the query parameters and request body as form data.
 type FormDataReader struct{}
 
-func (r *FormDataReader) Read(req *http.Request, data interface{}) error {
+func (r *FormDataReader) Read(req *fasthttp.RequestCtx, data interface{}) error {
 	// Do not check return result. Otherwise GET request will cause problem.
-	req.ParseMultipartForm(32 << 20)
-	return ReadFormData(req.Form, data)
+	f, err := req.MultipartForm()
+	if err != nil {
+		return err
+	}
+	return ReadFormData(f.Value, data)
 }
 
 const formTag = "form"

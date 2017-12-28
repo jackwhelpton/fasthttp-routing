@@ -3,52 +3,59 @@ package routing
 import (
 	"errors"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"net/http"
-	"net/http/httptest"
 	"testing"
+
+	"github.com/valyala/fasthttp"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRouterNotFound(t *testing.T) {
 	r := New()
 	h := func(c *Context) error {
-		fmt.Fprint(c.Response, "ok")
+		fmt.Fprint(c.RequestCtx, "ok")
 		return nil
 	}
 	r.Get("/users", h)
 	r.Post("/users", h)
 	r.NotFound(MethodNotAllowedHandler, NotFoundHandler)
 
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/users", nil)
-	r.ServeHTTP(res, req)
-	assert.Equal(t, "ok", res.Body.String(), "response body")
-	assert.Equal(t, http.StatusOK, res.Code, "HTTP status code")
+	var ctx fasthttp.RequestCtx
+	ctx.Request.Header.SetMethod("GET")
+	ctx.Request.SetRequestURI("/users")
+	r.HandleRequest(&ctx)
+	assert.Equal(t, "ok", string(ctx.Response.Body()), "response body")
+	assert.Equal(t, http.StatusOK, ctx.Response.Header.StatusCode(), "HTTP status code")
 
-	res = httptest.NewRecorder()
-	req, _ = http.NewRequest("PUT", "/users", nil)
-	r.ServeHTTP(res, req)
-	assert.Equal(t, "GET, OPTIONS, POST", res.Header().Get("Allow"), "Allow header")
-	assert.Equal(t, http.StatusMethodNotAllowed, res.Code, "HTTP status code")
+	ctx = fasthttp.RequestCtx{}
+	ctx.Request.Header.SetMethod("PUT")
+	ctx.Request.SetRequestURI("/users")
+	r.HandleRequest(&ctx)
+	assert.Equal(t, "GET, OPTIONS, POST", string(ctx.Response.Header.Peek("Allow")), "Allow header")
+	assert.Equal(t, http.StatusMethodNotAllowed, ctx.Response.Header.StatusCode(), "HTTP status code")
 
-	res = httptest.NewRecorder()
-	req, _ = http.NewRequest("OPTIONS", "/users", nil)
-	r.ServeHTTP(res, req)
-	assert.Equal(t, "GET, OPTIONS, POST", res.Header().Get("Allow"), "Allow header")
-	assert.Equal(t, http.StatusOK, res.Code, "HTTP status code")
+	ctx = fasthttp.RequestCtx{}
+	ctx.Request.Header.SetMethod("OPTIONS")
+	ctx.Request.SetRequestURI("/users")
+	r.HandleRequest(&ctx)
+	assert.Equal(t, "GET, OPTIONS, POST", string(ctx.Response.Header.Peek("Allow")), "Allow header")
+	assert.Equal(t, http.StatusOK, ctx.Response.Header.StatusCode(), "HTTP status code")
 
-	res = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/users/", nil)
-	r.ServeHTTP(res, req)
-	assert.Equal(t, "", res.Header().Get("Allow"), "Allow header")
-	assert.Equal(t, http.StatusNotFound, res.Code, "HTTP status code")
+	ctx = fasthttp.RequestCtx{}
+	ctx.Request.Header.SetMethod("GET")
+	ctx.Request.SetRequestURI("/users/")
+	r.HandleRequest(&ctx)
+	assert.Equal(t, "", string(ctx.Response.Header.Peek("Allow")), "Allow header")
+	assert.Equal(t, http.StatusNotFound, ctx.Response.Header.StatusCode(), "HTTP status code")
 
 	r.IgnoreTrailingSlash = true
-	res = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/users/", nil)
-	r.ServeHTTP(res, req)
-	assert.Equal(t, "ok", res.Body.String(), "response body")
-	assert.Equal(t, http.StatusOK, res.Code, "HTTP status code")
+	ctx = fasthttp.RequestCtx{}
+	ctx.Request.Header.SetMethod("GET")
+	ctx.Request.SetRequestURI("/users/")
+	r.HandleRequest(&ctx)
+	assert.Equal(t, "ok", string(ctx.Response.Body()), "response body")
+	assert.Equal(t, http.StatusOK, ctx.Response.Header.StatusCode(), "HTTP status code")
 }
 
 func TestRouterUse(t *testing.T) {
@@ -83,8 +90,8 @@ func TestRouterFind(t *testing.T) {
 }
 
 func TestRouterNormalizeRequestPath(t *testing.T) {
-	tests := []struct{
-		path string
+	tests := []struct {
+		path     string
 		expected string
 	}{
 		{"/", "/"},
@@ -103,30 +110,22 @@ func TestRouterNormalizeRequestPath(t *testing.T) {
 
 func TestRouterHandleError(t *testing.T) {
 	r := New()
-	res := httptest.NewRecorder()
-	c := &Context{Response: res}
+	c := &Context{}
 	r.handleError(c, errors.New("abc"))
-	assert.Equal(t, http.StatusInternalServerError, res.Code)
+	assert.Equal(t, http.StatusInternalServerError, c.Response.Header.StatusCode())
 
-	res = httptest.NewRecorder()
-	c = &Context{Response: res}
+	c = &Context{}
 	r.handleError(c, NewHTTPError(http.StatusNotFound))
-	assert.Equal(t, http.StatusNotFound, res.Code)
+	assert.Equal(t, http.StatusNotFound, c.Response.Header.StatusCode())
 }
 
-func TestHTTPHandler(t *testing.T) {
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/users/", nil)
-	c := NewContext(res, req)
+func TestRequestHandler(t *testing.T) {
+	var ctx fasthttp.RequestCtx
+	ctx.Request.Header.SetMethod("GET")
+	ctx.Request.SetRequestURI("/users/")
+	c := NewContext(&ctx)
 
-	h1 := HTTPHandlerFunc(http.NotFound)
-	assert.Nil(t, h1(c))
-	assert.Equal(t, http.StatusNotFound, res.Code)
-
-	res = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/users/", nil)
-	c = NewContext(res, req)
-	h2 := HTTPHandler(http.NotFoundHandler())
-	assert.Nil(t, h2(c))
-	assert.Equal(t, http.StatusNotFound, res.Code)
+	h := RequestHandlerFunc(func(c *fasthttp.RequestCtx) { c.NotFound() })
+	assert.Nil(t, h(c))
+	assert.Equal(t, http.StatusNotFound, ctx.Response.Header.StatusCode())
 }

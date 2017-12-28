@@ -1,9 +1,9 @@
 package routing
 
 import (
-	"bytes"
-	"net/http"
 	"testing"
+
+	"github.com/valyala/fasthttp"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -76,9 +76,12 @@ func TestDefaultDataReader(t *testing.T) {
 	}
 	for _, test := range tests {
 		var data FA
-		req, _ := http.NewRequest(test.method, test.URL, bytes.NewBufferString(test.body))
-		req.Header.Set("Content-Type", test.header)
-		c := NewContext(nil, req)
+		var ctx fasthttp.RequestCtx
+		ctx.Request.Header.SetMethod(test.method)
+		ctx.Request.SetRequestURI(test.URL)
+		ctx.Request.SetBodyString(test.body)
+		ctx.Request.Header.SetContentType(test.header)
+		c := NewContext(&ctx)
 		err := c.Read(&data)
 		assert.Nil(t, err, test.tag)
 		assert.Equal(t, expected, data, test.tag)

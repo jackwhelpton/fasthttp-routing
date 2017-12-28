@@ -28,9 +28,8 @@ func TestDefaultDataWriter(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "", res.Body.String())
 
-	res = httptest.NewRecorder()
 	c := &Context{}
-	c.init(res, nil)
+	c.init(nil)
 	assert.Nil(t, c.Write("abc"))
 	assert.Equal(t, "abc", res.Body.String())
 }

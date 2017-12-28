@@ -8,6 +8,7 @@ package content
 import (
 	"encoding/json"
 	"encoding/xml"
+	"io"
 	"net/http"
 
 	"github.com/go-ozzo/ozzo-routing"
@@ -65,7 +66,7 @@ func (w *JSONDataWriter) SetHeader(res http.ResponseWriter) {
 	res.Header().Set("Content-Type", "application/json")
 }
 
-func (w *JSONDataWriter) Write(res http.ResponseWriter, data interface{}) (err error) {
+func (w *JSONDataWriter) Write(res io.Writer, data interface{}) (err error) {
 	enc := json.NewEncoder(res)
 	enc.SetEscapeHTML(false)
 	return enc.Encode(data)
@@ -78,7 +79,7 @@ func (w *XMLDataWriter) SetHeader(res http.ResponseWriter) {
 	res.Header().Set("Content-Type", "application/xml; charset=UTF-8")
 }
 
-func (w *XMLDataWriter) Write(res http.ResponseWriter, data interface{}) (err error) {
+func (w *XMLDataWriter) Write(res io.Writer, data interface{}) (err error) {
 	var bytes []byte
 	if bytes, err = xml.Marshal(data); err != nil {
 		return

@@ -2,15 +2,17 @@ package routing
 
 import (
 	"fmt"
-	"net/http"
+	"io"
+
+	"github.com/valyala/fasthttp"
 )
 
 // DataWriter is used by Context.Write() to write arbitrary data into an HTTP response.
 type DataWriter interface {
 	// SetHeader sets necessary response headers.
-	SetHeader(http.ResponseWriter)
+	SetHeader(*fasthttp.ResponseHeader)
 	// Write writes the given data into the response.
-	Write(http.ResponseWriter, interface{}) error
+	Write(io.Writer, interface{}) error
 }
 
 // DefaultDataWriter writes the given data in an HTTP response.
@@ -19,9 +21,9 @@ var DefaultDataWriter DataWriter = &dataWriter{}
 
 type dataWriter struct{}
 
-func (w *dataWriter) SetHeader(res http.ResponseWriter) {}
+func (w *dataWriter) SetHeader(c *fasthttp.ResponseHeader) {}
 
-func (w *dataWriter) Write(res http.ResponseWriter, data interface{}) error {
+func (w *dataWriter) Write(res io.Writer, data interface{}) error {
 	var bytes []byte
 	switch data.(type) {
 	case []byte:

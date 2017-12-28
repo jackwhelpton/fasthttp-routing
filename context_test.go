@@ -3,10 +3,10 @@ package routing
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
+
+	"github.com/valyala/fasthttp"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -40,14 +40,15 @@ func TestContextSetParam(t *testing.T) {
 }
 
 func TestContextInit(t *testing.T) {
-	c := NewContext(nil, nil)
-	assert.Nil(t, c.Response)
-	assert.Nil(t, c.Request)
+	c := NewContext(nil)
+	assert.Nil(t, c.RequestCtx)
 	assert.Equal(t, 0, len(c.handlers))
-	req, _ := http.NewRequest("GET", "/users/", nil)
-	c.init(httptest.NewRecorder(), req)
-	assert.NotNil(t, c.Response)
-	assert.NotNil(t, c.Request)
+	var ctx fasthttp.RequestCtx
+	ctx.Request.Header.SetMethod("GET")
+	ctx.Request.SetRequestURI("/users/")
+	c.init(&ctx)
+	assert.NotNil(t, &c.Response)
+	assert.NotNil(t, &c.Request)
 	assert.Equal(t, -1, c.index)
 	assert.Nil(t, c.data)
 }
@@ -62,7 +63,7 @@ func TestContextURL(t *testing.T) {
 
 func TestContextGetSet(t *testing.T) {
 	c := NewContext(nil, nil)
-	c.init(nil, nil)
+	c.init(nil)
 	assert.Nil(t, c.Get("abc"))
 	c.Set("abc", "123")
 	c.Set("xyz", 123)
@@ -71,10 +72,14 @@ func TestContextGetSet(t *testing.T) {
 }
 
 func TestContextQueryForm(t *testing.T) {
-	req, _ := http.NewRequest("POST", "http://www.google.com/search?q=foo&q=bar&both=x&prio=1&empty=not",
-		strings.NewReader("z=post&both=y&prio=2&empty="))
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
-	c := NewContext(nil, req)
+
+	var ctx fasthttp.RequestCtx
+	ctx.Request.Header.SetMethod("POST")
+	ctx.Request.SetRequestURI("http://www.google.com/search?q=foo&q=bar&both=x&prio=1&empty=not")
+	ctx.Request.SetBodyString("z=post&both=y&prio=2&empty=")
+	ctx.Request.Header.SetContentType("application/x-www-form-urlencoded; param=value")
+
+	c := NewContext(&ctx)
 	assert.Equal(t, "foo", c.Query("q"))
 	assert.Equal(t, "", c.Query("z"))
 	assert.Equal(t, "123", c.Query("z", "123"))
@@ -127,25 +132,27 @@ func TestContextNextAbort(t *testing.T) {
 
 func testNewContext(handlers ...Handler) (*Context, *httptest.ResponseRecorder) {
 	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "http://127.0.0.1/users", nil)
+	var ctx fasthttp.RequestCtx
+	ctx.Request.Header.SetMethod("GET")
+	ctx.Request.Header.SetRequestURI("http://127.0.0.1/users")
 	c := &Context{}
-	c.init(res, req)
+	c.init(&ctx)
 	c.handlers = handlers
 	return c, res
 }
 
 func testNextHandler(tag string) Handler {
 	return func(c *Context) error {
-		fmt.Fprintf(c.Response, "<%v>", tag)
+		fmt.Fprintf(c.RequestCtx, "<%v>", tag)
 		err := c.Next()
-		fmt.Fprintf(c.Response, "</%v>", tag)
+		fmt.Fprintf(c.RequestCtx, "</%v>", tag)
 		return err
 	}
 }
 
 func testAbortHandler(tag string) Handler {
 	return func(c *Context) error {
-		fmt.Fprintf(c.Response, "<%v/>", tag)
+		fmt.Fprintf(c.RequestCtx, "<%v/>", tag)
 		c.Abort()
 		return nil
 	}
@@ -153,14 +160,14 @@ func testAbortHandler(tag string) Handler {
 
 func testErrorHandler(tag string) Handler {
 	return func(c *Context) error {
-		fmt.Fprintf(c.Response, "<%v/>", tag)
+		fmt.Fprintf(c.RequestCtx, "<%v/>", tag)
 		return errors.New("error:" + tag)
 	}
 }
 
 func testNormalHandler(tag string) Handler {
 	return func(c *Context) error {
-		fmt.Fprintf(c.Response, "<%v/>", tag)
+		fmt.Fprintf(c.RequestCtx, "<%v/>", tag)
 		return nil
 	}
 }

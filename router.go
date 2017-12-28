@@ -6,11 +6,18 @@
 package routing
 
 import (
+	"bytes"
 	"net/http"
 	"net/url"
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/valyala/fasthttp"
+)
+
+var (
+	strOptions = []byte("OPTIONS")
 )
 
 type (
@@ -69,18 +76,18 @@ func New() *Router {
 	return r
 }
 
-// ServeHTTP handles the HTTP request.
-// It is required by http.Handler
-func (r *Router) ServeHTTP(res http.ResponseWriter, req *http.Request) {
+// HandleRequest handles the HTTP request.
+func (r *Router) HandleRequest(ctx *fasthttp.RequestCtx) {
 	c := r.pool.Get().(*Context)
-	c.init(res, req)
+	c.init(ctx)
 	if r.UseEscapedPath {
-		c.handlers, c.pnames = r.find(req.Method, r.normalizeRequestPath(req.URL.EscapedPath()), c.pvalues)
+		u, _ := url.Parse(string(ctx.Path()))
+		c.handlers, c.pnames = r.find(string(ctx.Method()), r.normalizeRequestPath(u.EscapedPath()), c.pvalues)
 		for i, v := range c.pvalues {
 			c.pvalues[i], _ = url.QueryUnescape(v)
 		}
 	} else {
-		c.handlers, c.pnames = r.find(req.Method, r.normalizeRequestPath(req.URL.Path), c.pvalues)
+		c.handlers, c.pnames = r.find(string(ctx.Method()), r.normalizeRequestPath(string(ctx.Path())), c.pvalues)
 	}
 	if err := c.Next(); err != nil {
 		r.handleError(c, err)
@@ -126,9 +133,9 @@ func (r *Router) Find(method, path string) (handlers []Handler, params map[strin
 // handleError is the error handler for handling any unhandled errors.
 func (r *Router) handleError(c *Context, err error) {
 	if httpError, ok := err.(HTTPError); ok {
-		http.Error(c.Response, httpError.Error(), httpError.StatusCode())
+		c.Error(httpError.Error(), httpError.StatusCode())
 	} else {
-		http.Error(c.Response, err.Error(), http.StatusInternalServerError)
+		c.Error(err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -196,7 +203,7 @@ func NotFoundHandler(*Context) error {
 // In this case, the handler will respond with an Allow HTTP header listing the allowed HTTP methods.
 // Otherwise, the handler will do nothing and let the next handler (usually a NotFoundHandler) to handle the problem.
 func MethodNotAllowedHandler(c *Context) error {
-	methods := c.Router().findAllowedMethods(c.Request.URL.Path)
+	methods := c.Router().findAllowedMethods(string(c.Path()))
 	if len(methods) == 0 {
 		return nil
 	}
@@ -208,26 +215,18 @@ func MethodNotAllowedHandler(c *Context) error {
 		i++
 	}
 	sort.Strings(ms)
-	c.Response.Header().Set("Allow", strings.Join(ms, ", "))
-	if c.Request.Method != "OPTIONS" {
-		c.Response.WriteHeader(http.StatusMethodNotAllowed)
+	c.Response.Header.Set("Allow", strings.Join(ms, ", "))
+	if !bytes.Equal(c.Method(), strOptions) {
+		c.SetStatusCode(http.StatusMethodNotAllowed)
 	}
 	c.Abort()
 	return nil
 }
 
-// HTTPHandlerFunc adapts a http.HandlerFunc into a routing.Handler.
-func HTTPHandlerFunc(h http.HandlerFunc) Handler {
+// RequestHandlerFunc adapts a fasthttp.RequestHandler into a routing.Handler.
+func RequestHandlerFunc(h fasthttp.RequestHandler) Handler {
 	return func(c *Context) error {
-		h(c.Response, c.Request)
-		return nil
-	}
-}
-
-// HTTPHandler adapts a http.Handler into a routing.Handler.
-func HTTPHandler(h http.Handler) Handler {
-	return func(c *Context) error {
-		h.ServeHTTP(c.Response, c.Request)
+		h(c.RequestCtx)
 		return nil
 	}
 }
