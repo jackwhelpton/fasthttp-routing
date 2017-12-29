@@ -6,12 +6,13 @@
 package cors
 
 import (
-	"net/http"
+	"bytes"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/go-ozzo/ozzo-routing"
+	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/valyala/fasthttp"
 )
 
 const (
@@ -59,26 +60,27 @@ var AllowAll = Options{
 func Handler(opts Options) routing.Handler {
 
 	opts.init()
+	strOptions := []byte("OPTIONS")
 
 	return func(c *routing.Context) (err error) {
-		origin := c.Request.Header.Get(headerOrigin)
+		origin := string(c.Request.Header.Peek(headerOrigin))
 		if origin == "" {
 			// the request is outside the scope of CORS
 			return
 		}
-		if c.Request.Method == "OPTIONS" {
+		if bytes.Equal(c.Request.Header.Method(), strOptions) {
 			// a preflight request
-			method := c.Request.Header.Get(headerRequestMethod)
+			method := string(c.Request.Header.Peek(headerRequestMethod))
 			if method == "" {
 				// the request is outside the scope of CORS
 				return
 			}
-			headers := c.Request.Header.Get(headerRequestHeaders)
-			opts.setPreflightHeaders(origin, method, headers, c.Response.Header())
+			headers := string(c.Request.Header.Peek(headerRequestHeaders))
+			opts.setPreflightHeaders(origin, method, headers, &c.Response.Header)
 			c.Abort()
 			return
 		}
-		opts.setActualHeaders(origin, c.Response.Header())
+		opts.setActualHeaders(origin, &c.Response.Header)
 		return
 	}
 }
@@ -96,7 +98,7 @@ func (o *Options) isOriginAllowed(origin string) bool {
 	return o.AllowOrigins == "*" || o.allowOriginMap[origin]
 }
 
-func (o *Options) setActualHeaders(origin string, headers http.Header) {
+func (o *Options) setActualHeaders(origin string, headers *fasthttp.ResponseHeader) {
 	if !o.isOriginAllowed(origin) {
 		return
 	}
@@ -108,7 +110,7 @@ func (o *Options) setActualHeaders(origin string, headers http.Header) {
 	}
 }
 
-func (o *Options) setPreflightHeaders(origin, method, reqHeaders string, headers http.Header) {
+func (o *Options) setPreflightHeaders(origin, method, reqHeaders string, headers *fasthttp.ResponseHeader) {
 	allowed, allowedHeaders := o.isPreflightAllowed(origin, method, reqHeaders)
 	if !allowed {
 		return
@@ -155,7 +157,7 @@ func (o *Options) isPreflightAllowed(origin, method, reqHeaders string) (allowed
 	return
 }
 
-func (o *Options) setOriginHeader(origin string, headers http.Header) {
+func (o *Options) setOriginHeader(origin string, headers *fasthttp.ResponseHeader) {
 	if o.AllowCredentials {
 		headers.Set(headerAllowOrigin, origin)
 		headers.Set(headerAllowCredentials, "true")

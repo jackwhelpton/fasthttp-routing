@@ -5,14 +5,12 @@
 package cors
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"testing"
-
 	"time"
 
-	"github.com/go-ozzo/ozzo-routing"
+	"github.com/jackwhelpton/fasthttp-routing"
 	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
 )
 
 func TestBuildAllowMap(t *testing.T) {
@@ -68,45 +66,45 @@ func TestOptionsIsOriginAllowed(t *testing.T) {
 }
 
 func TestOptionsSetOriginHeaders(t *testing.T) {
-	headers := http.Header{}
+	headers := &fasthttp.ResponseHeader{}
 	opts := &Options{
 		AllowOrigins:     "https://example.com, https://foo.com",
 		AllowCredentials: false,
 	}
 	opts.setOriginHeader("https://example.com", headers)
-	assert.Equal(t, "https://example.com", headers.Get(headerAllowOrigin))
-	assert.Equal(t, "", headers.Get(headerAllowCredentials))
+	assert.Equal(t, "https://example.com", string(headers.Peek(headerAllowOrigin)))
+	assert.Equal(t, "", string(headers.Peek(headerAllowCredentials)))
 
-	headers = http.Header{}
+	headers = &fasthttp.ResponseHeader{}
 	opts = &Options{
 		AllowOrigins:     "*",
 		AllowCredentials: false,
 	}
 	opts.setOriginHeader("https://example.com", headers)
-	assert.Equal(t, "*", headers.Get(headerAllowOrigin))
-	assert.Equal(t, "", headers.Get(headerAllowCredentials))
+	assert.Equal(t, "*", string(headers.Peek(headerAllowOrigin)))
+	assert.Equal(t, "", string(headers.Peek(headerAllowCredentials)))
 
-	headers = http.Header{}
+	headers = &fasthttp.ResponseHeader{}
 	opts = &Options{
 		AllowOrigins:     "https://example.com, https://foo.com",
 		AllowCredentials: true,
 	}
 	opts.setOriginHeader("https://example.com", headers)
-	assert.Equal(t, "https://example.com", headers.Get(headerAllowOrigin))
-	assert.Equal(t, "true", headers.Get(headerAllowCredentials))
+	assert.Equal(t, "https://example.com", string(headers.Peek(headerAllowOrigin)))
+	assert.Equal(t, "true", string(headers.Peek(headerAllowCredentials)))
 
-	headers = http.Header{}
+	headers = &fasthttp.ResponseHeader{}
 	opts = &Options{
 		AllowOrigins:     "*",
 		AllowCredentials: true,
 	}
 	opts.setOriginHeader("https://example.com", headers)
-	assert.Equal(t, "https://example.com", headers.Get(headerAllowOrigin))
-	assert.Equal(t, "true", headers.Get(headerAllowCredentials))
+	assert.Equal(t, "https://example.com", string(headers.Peek(headerAllowOrigin)))
+	assert.Equal(t, "true", string(headers.Peek(headerAllowCredentials)))
 }
 
 func TestOptionsSetActualHeaders(t *testing.T) {
-	headers := http.Header{}
+	headers := &fasthttp.ResponseHeader{}
 	opts := &Options{
 		AllowOrigins:     "https://example.com, https://foo.com",
 		AllowCredentials: false,
@@ -114,18 +112,18 @@ func TestOptionsSetActualHeaders(t *testing.T) {
 	}
 	opts.init()
 	opts.setActualHeaders("https://example.com", headers)
-	assert.Equal(t, "https://example.com", headers.Get(headerAllowOrigin))
-	assert.Equal(t, "X-Ping, X-Pong", headers.Get(headerExposeHeaders))
+	assert.Equal(t, "https://example.com", string(headers.Peek(headerAllowOrigin)))
+	assert.Equal(t, "X-Ping, X-Pong", string(headers.Peek(headerExposeHeaders)))
 
 	opts.ExposeHeaders = ""
-	headers = http.Header{}
+	headers = &fasthttp.ResponseHeader{}
 	opts.setActualHeaders("https://example.com", headers)
-	assert.Equal(t, "https://example.com", headers.Get(headerAllowOrigin))
-	assert.Equal(t, "", headers.Get(headerExposeHeaders))
+	assert.Equal(t, "https://example.com", string(headers.Peek(headerAllowOrigin)))
+	assert.Equal(t, "", string(headers.Peek(headerExposeHeaders)))
 
-	headers = http.Header{}
+	headers = &fasthttp.ResponseHeader{}
 	opts.setActualHeaders("https://bar.com", headers)
-	assert.Equal(t, "", headers.Get(headerAllowOrigin))
+	assert.Equal(t, "", string(headers.Peek(headerAllowOrigin)))
 }
 
 func TestOptionsIsPreflightAllowed(t *testing.T) {
@@ -161,7 +159,7 @@ func TestOptionsIsPreflightAllowed(t *testing.T) {
 }
 
 func TestOptionsSetPreflightHeaders(t *testing.T) {
-	headers := http.Header{}
+	headers := &fasthttp.ResponseHeader{}
 	opts := &Options{
 		AllowOrigins:     "https://example.com, https://foo.com",
 		AllowMethods:     "PUT, PATCH",
@@ -172,16 +170,19 @@ func TestOptionsSetPreflightHeaders(t *testing.T) {
 	}
 	opts.init()
 	opts.setPreflightHeaders("https://bar.com", "PUT", "", headers)
-	assert.Zero(t, len(headers))
+	assert.Equal(t, "", string(headers.Peek(headerAllowOrigin)))
+	assert.Equal(t, "", string(headers.Peek(headerAllowMethods)))
+	assert.Equal(t, "", string(headers.Peek(headerMaxAge)))
+	assert.Equal(t, "", string(headers.Peek(headerAllowHeaders)))
 
-	headers = http.Header{}
+	headers = &fasthttp.ResponseHeader{}
 	opts.setPreflightHeaders("https://foo.com", "PUT", "X-Pong", headers)
-	assert.Equal(t, "https://foo.com", headers.Get(headerAllowOrigin))
-	assert.Equal(t, "PUT, PATCH", headers.Get(headerAllowMethods))
-	assert.Equal(t, "100", headers.Get(headerMaxAge))
-	assert.Equal(t, "X-Pong", headers.Get(headerAllowHeaders))
+	assert.Equal(t, "https://foo.com", string(headers.Peek(headerAllowOrigin)))
+	assert.Equal(t, "PUT, PATCH", string(headers.Peek(headerAllowMethods)))
+	assert.Equal(t, "100", string(headers.Peek(headerMaxAge)))
+	assert.Equal(t, "X-Pong", string(headers.Peek(headerAllowHeaders)))
 
-	headers = http.Header{}
+	headers = &fasthttp.ResponseHeader{}
 	opts = &Options{
 		AllowOrigins: "*",
 		AllowMethods: "*",
@@ -189,9 +190,9 @@ func TestOptionsSetPreflightHeaders(t *testing.T) {
 	}
 	opts.init()
 	opts.setPreflightHeaders("https://bar.com", "PUT", "X-Pong", headers)
-	assert.Equal(t, "*", headers.Get(headerAllowOrigin))
-	assert.Equal(t, "PUT", headers.Get(headerAllowMethods))
-	assert.Equal(t, "X-Pong", headers.Get(headerAllowHeaders))
+	assert.Equal(t, "*", string(headers.Peek(headerAllowOrigin)))
+	assert.Equal(t, "PUT", string(headers.Peek(headerAllowMethods)))
+	assert.Equal(t, "X-Pong", string(headers.Peek(headerAllowHeaders)))
 }
 
 func TestHandlers(t *testing.T) {
@@ -199,31 +200,32 @@ func TestHandlers(t *testing.T) {
 		AllowOrigins: "https://example.com, https://foo.com",
 		AllowMethods: "PUT, PATCH",
 	})
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("OPTIONS", "/users/", nil)
-	req.Header.Set("Origin", "https://example.com")
-	req.Header.Set("Access-Control-Request-Method", "PATCH")
-	c := routing.NewContext(res, req)
+	var ctx fasthttp.RequestCtx
+	ctx.Request.Header.SetMethod("OPTIONS")
+	ctx.Request.SetRequestURI("/users/")
+	ctx.Request.Header.Set("Origin", "https://example.com")
+	ctx.Request.Header.Set("Access-Control-Request-Method", "PATCH")
+	c := routing.NewContext(&ctx)
 	assert.Nil(t, h(c))
-	assert.Equal(t, "https://example.com", res.Header().Get(headerAllowOrigin))
+	assert.Equal(t, "https://example.com", string(c.Response.Header.Peek(headerAllowOrigin)))
+	ctx.Response.Reset()
 
-	res = httptest.NewRecorder()
-	req, _ = http.NewRequest("PATCH", "/users/", nil)
-	req.Header.Set("Origin", "https://example.com")
-	c = routing.NewContext(res, req)
+	ctx.Request.Header.Reset()
+	ctx.Request.Header.SetMethod("PATCH")
+	ctx.Request.Header.Set("Origin", "https://example.com")
 	assert.Nil(t, h(c))
-	assert.Equal(t, "https://example.com", res.Header().Get(headerAllowOrigin))
+	assert.Equal(t, "https://example.com", string(c.Response.Header.Peek(headerAllowOrigin)))
+	ctx.Response.Reset()
 
-	res = httptest.NewRecorder()
-	req, _ = http.NewRequest("PATCH", "/users/", nil)
-	c = routing.NewContext(res, req)
+	ctx.Request.Header.Reset()
+	ctx.Request.Header.SetMethod("PATCH")
 	assert.Nil(t, h(c))
-	assert.Equal(t, "", res.Header().Get(headerAllowOrigin))
+	assert.Equal(t, "", string(c.Response.Header.Peek(headerAllowOrigin)))
+	ctx.Response.Reset()
 
-	res = httptest.NewRecorder()
-	req, _ = http.NewRequest("OPTIONS", "/users/", nil)
-	req.Header.Set("Origin", "https://example.com")
-	c = routing.NewContext(res, req)
+	ctx.Request.Header.Reset()
+	ctx.Request.Header.SetMethod("OPTIONS")
+	ctx.Request.Header.Set("Origin", "https://example.com")
 	assert.Nil(t, h(c))
-	assert.Equal(t, "", res.Header().Get(headerAllowOrigin))
+	assert.Equal(t, "", string(c.Response.Header.Peek(headerAllowOrigin)))
 }
