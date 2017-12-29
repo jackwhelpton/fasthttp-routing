@@ -7,11 +7,11 @@ package access
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
-	"github.com/go-ozzo/ozzo-routing"
+	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/valyala/fasthttp"
 )
 
 // LogFunc logs a message using the given format and optional arguments.
@@ -24,7 +24,7 @@ type LogFunc func(format string, a ...interface{})
 // through this middleware and does whatever log writing it wants with that
 // information.
 // LogWriterFunc should be thread safe.
-type LogWriterFunc func(req *http.Request, res *LogResponseWriter, elapsed float64)
+type LogWriterFunc func(ctx *fasthttp.RequestCtx, elapsed float64)
 
 // CustomLogger returns a handler that calls the LogWriterFunc passed to it for every request.
 // The LogWriterFunc is provided with the http.Request and LogResponseWriter objects for the
@@ -33,9 +33,10 @@ type LogWriterFunc func(req *http.Request, res *LogResponseWriter, elapsed float
 //
 //     import (
 //         "log"
-//         "github.com/go-ozzo/ozzo-routing"
-//         "github.com/go-ozzo/ozzo-routing/access"
 //         "net/http"
+//
+//         "github.com/jackwhelpton/fasthttp-routing"
+//         "github.com/jackwhelpton/fasthttp-routing/access"
 //     )
 //
 //     func myCustomLogger(req http.Context, res access.LogResponseWriter, elapsed int64) {
@@ -47,18 +48,13 @@ func CustomLogger(loggerFunc LogWriterFunc) routing.Handler {
 	return func(c *routing.Context) error {
 		startTime := time.Now()
 
-		req := c.Request
-		rw := &LogResponseWriter{c.Response, http.StatusOK, 0}
-		c.Response = rw
-
 		err := c.Next()
 
 		elapsed := float64(time.Now().Sub(startTime).Nanoseconds()) / 1e6
-		loggerFunc(req, rw, elapsed)
+		loggerFunc(c.RequestCtx, elapsed)
 
 		return err
 	}
-
 }
 
 // Logger returns a handler that logs a message for every request.
@@ -67,46 +63,29 @@ func CustomLogger(loggerFunc LogWriterFunc) routing.Handler {
 //
 //     import (
 //         "log"
-//         "github.com/go-ozzo/ozzo-routing"
-//         "github.com/go-ozzo/ozzo-routing/access"
+//         "github.com/jackwhelpton/fasthttp-routing"
+//         "github.com/jackwhelpton/fasthttp-routing/access"
 //     )
 //
 //     r := routing.New()
 //     r.Use(access.Logger(log.Printf))
-func Logger(log LogFunc) routing.Handler {
-	var logger = func(req *http.Request, rw *LogResponseWriter, elapsed float64) {
-		clientIP := GetClientIP(req)
-		requestLine := fmt.Sprintf("%s %s %s", req.Method, req.URL.String(), req.Proto)
-		log(`[%s] [%.3fms] %s %d %d`, clientIP, elapsed, requestLine, rw.Status, rw.BytesWritten)
+func Logger(logf LogFunc) routing.Handler {
+	var logger = func(ctx *fasthttp.RequestCtx, elapsed float64) {
+		ip := GetClientIP(ctx)
+		req := fmt.Sprintf("%s %s %s", string(ctx.Request.Header.Method()), string(ctx.RequestURI()), string(ctx.Request.URI().Scheme()))
+		logf(`[%s] [%.3fms] %s %d %d`, ip, elapsed, req, ctx.Response.StatusCode(), len(ctx.Response.Body()))
 
 	}
 	return CustomLogger(logger)
 }
 
-// LogResponseWriter wraps http.ResponseWriter in order to capture HTTP status and response length information.
-type LogResponseWriter struct {
-	http.ResponseWriter
-	Status       int
-	BytesWritten int64
-}
-
-func (r *LogResponseWriter) Write(p []byte) (int, error) {
-	written, err := r.ResponseWriter.Write(p)
-	r.BytesWritten += int64(written)
-	return written, err
-}
-
-func (r *LogResponseWriter) WriteHeader(status int) {
-	r.Status = status
-	r.ResponseWriter.WriteHeader(status)
-}
-
-func GetClientIP(req *http.Request) string {
-	ip := req.Header.Get("X-Real-IP")
+// GetClientIP returns the originating IP for a request.
+func GetClientIP(ctx *fasthttp.RequestCtx) string {
+	ip := string(ctx.Request.Header.Peek("X-Real-IP"))
 	if ip == "" {
-		ip = req.Header.Get("X-Forwarded-For")
+		ip = string(ctx.Request.Header.Peek("X-Forwarded-For"))
 		if ip == "" {
-			ip = req.RemoteAddr
+			ip = ctx.RemoteAddr().String()
 		}
 	}
 	if colon := strings.LastIndex(ip, ":"); colon != -1 {
