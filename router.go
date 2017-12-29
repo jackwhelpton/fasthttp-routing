@@ -18,6 +18,7 @@ import (
 
 var (
 	strOptions = []byte("OPTIONS")
+	strPatch   = []byte("PATCH")
 )
 
 type (

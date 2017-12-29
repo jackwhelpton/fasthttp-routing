@@ -23,9 +23,9 @@ type Context struct {
 
 // NewContext creates a new Context object with the given request context, and the handlers.
 // This method is primarily provided for writing unit tests for handlers.
-func NewContext(req *fasthttp.RequestCtx, handlers ...Handler) *Context {
+func NewContext(ctx *fasthttp.RequestCtx, handlers ...Handler) *Context {
 	c := &Context{handlers: handlers}
-	c.init(req)
+	c.init(ctx)
 	return c
 }
 
@@ -89,15 +89,17 @@ func (c *Context) Query(name string, defaultValue ...string) string {
 // The form takes precedence over the latter.
 // If key is not present, it returns the specified default value or an empty string.
 func (c *Context) Form(key string, defaultValue ...string) string {
-	f, _ := c.MultipartForm()
-	if vs := f.Value[key]; len(vs) > 0 {
-		return vs[0]
+	if c.PostArgs().Has(key) {
+		return string(c.PostArgs().Peek(key))
 	}
-
+	if mf, err := c.MultipartForm(); err == nil && mf.Value != nil {
+		if vs := mf.Value[key]; len(vs) > 0 {
+			return vs[0]
+		}
+	}
 	if v := c.QueryArgs().Peek(key); v != nil {
 		return string(v)
 	}
-
 	if len(defaultValue) > 0 {
 		return defaultValue[0]
 	}
@@ -107,11 +109,14 @@ func (c *Context) Form(key string, defaultValue ...string) string {
 // PostForm returns the first value for the named component from POST and PUT body parameters.
 // If key is not present, it returns the specified default value or an empty string.
 func (c *Context) PostForm(key string, defaultValue ...string) string {
-	f, _ := c.MultipartForm()
-	if vs := f.Value[key]; len(vs) > 0 {
-		return vs[0]
+	if c.PostArgs().Has(key) {
+		return string(c.PostArgs().Peek(key))
 	}
-
+	if mf, err := c.MultipartForm(); err == nil && mf.Value != nil {
+		if vs := mf.Value[key]; len(vs) > 0 {
+			return vs[0]
+		}
+	}
 	if len(defaultValue) > 0 {
 		return defaultValue[0]
 	}
@@ -189,7 +194,7 @@ func (c *Context) init(ctx *fasthttp.RequestCtx) {
 }
 
 func getContentType(ctx *fasthttp.RequestCtx) string {
-	t := string(ctx.Response.Header.ContentType())
+	t := string(ctx.Request.Header.ContentType())
 	for i, c := range t {
 		if c == ' ' || c == ';' {
 			return t[:i]

@@ -1,6 +1,7 @@
 package routing
 
 import (
+	"bytes"
 	"encoding"
 	"encoding/json"
 	"encoding/xml"
@@ -51,27 +52,33 @@ var (
 // JSONDataReader reads the request body as JSON-formatted data.
 type JSONDataReader struct{}
 
-func (r *JSONDataReader) Read(req *fasthttp.RequestCtx, data interface{}) error {
-	return json.Unmarshal(req.PostBody(), data)
+func (r *JSONDataReader) Read(ctx *fasthttp.RequestCtx, data interface{}) error {
+	return json.Unmarshal(ctx.PostBody(), data)
 }
 
 // XMLDataReader reads the request body as XML-formatted data.
 type XMLDataReader struct{}
 
-func (r *XMLDataReader) Read(req *fasthttp.RequestCtx, data interface{}) error {
-	return xml.Unmarshal(req.PostBody(), data)
+func (r *XMLDataReader) Read(ctx *fasthttp.RequestCtx, data interface{}) error {
+	return xml.Unmarshal(ctx.PostBody(), data)
 }
 
 // FormDataReader reads the query parameters and request body as form data.
 type FormDataReader struct{}
 
-func (r *FormDataReader) Read(req *fasthttp.RequestCtx, data interface{}) error {
-	// Do not check return result. Otherwise GET request will cause problem.
-	f, err := req.MultipartForm()
-	if err != nil {
-		return err
+func (r *FormDataReader) Read(ctx *fasthttp.RequestCtx, data interface{}) error {
+	f := make(map[string][]string)
+	if ctx.IsPost() || ctx.IsPut() || bytes.Equal(ctx.Method(), strPatch) {
+		ctx.PostArgs().VisitAll(func(key, value []byte) {
+			k := string(key)
+			f[k] = append(f[k], string(value))
+		})
 	}
-	return ReadFormData(f.Value, data)
+	ctx.QueryArgs().VisitAll(func(key, value []byte) {
+		k := string(key)
+		f[k] = append(f[k], string(value))
+	})
+	return ReadFormData(f, data)
 }
 
 const formTag = "form"

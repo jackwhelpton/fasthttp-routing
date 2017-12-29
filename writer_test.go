@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
 )
 
 func TestDefaultDataWriter(t *testing.T) {
@@ -28,8 +29,8 @@ func TestDefaultDataWriter(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "", res.Body.String())
 
-	c := &Context{}
-	c.init(nil)
+	var ctx fasthttp.RequestCtx
+	c := NewContext(&ctx)
 	assert.Nil(t, c.Write("abc"))
-	assert.Equal(t, "abc", res.Body.String())
+	assert.Equal(t, "abc", string(c.Response.Body()))
 }

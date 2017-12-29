@@ -6,9 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/valyala/fasthttp"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
 )
 
 func TestRouterNotFound(t *testing.T) {
@@ -110,11 +109,11 @@ func TestRouterNormalizeRequestPath(t *testing.T) {
 
 func TestRouterHandleError(t *testing.T) {
 	r := New()
-	c := &Context{}
+	c := NewContext(&fasthttp.RequestCtx{})
 	r.handleError(c, errors.New("abc"))
 	assert.Equal(t, http.StatusInternalServerError, c.Response.Header.StatusCode())
 
-	c = &Context{}
+	c = NewContext(&fasthttp.RequestCtx{})
 	r.handleError(c, NewHTTPError(http.StatusNotFound))
 	assert.Equal(t, http.StatusNotFound, c.Response.Header.StatusCode())
 }
@@ -127,5 +126,5 @@ func TestRequestHandler(t *testing.T) {
 
 	h := RequestHandlerFunc(func(c *fasthttp.RequestCtx) { c.NotFound() })
 	assert.Nil(t, h(c))
-	assert.Equal(t, http.StatusNotFound, ctx.Response.Header.StatusCode())
+	assert.Equal(t, http.StatusNotFound, c.Response.Header.StatusCode())
 }

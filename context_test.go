@@ -3,12 +3,10 @@ package routing
 import (
 	"errors"
 	"fmt"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/valyala/fasthttp"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
 )
 
 func TestContextParam(t *testing.T) {
@@ -94,31 +92,31 @@ func TestContextQueryForm(t *testing.T) {
 }
 
 func TestContextNextAbort(t *testing.T) {
-	c, res := testNewContext(
+	c := testNewContext(
 		testNormalHandler("a"),
 		testNormalHandler("b"),
 		testNormalHandler("c"),
 	)
 	assert.Nil(t, c.Next())
-	assert.Equal(t, "<a/><b/><c/>", res.Body.String())
+	assert.Equal(t, "<a/><b/><c/>", string(c.Response.Body()))
 
-	c, res = testNewContext(
+	c = testNewContext(
 		testNextHandler("a"),
 		testNextHandler("b"),
 		testNextHandler("c"),
 	)
 	assert.Nil(t, c.Next())
-	assert.Equal(t, "<a><b><c></c></b></a>", res.Body.String())
+	assert.Equal(t, "<a><b><c></c></b></a>", string(c.Response.Body()))
 
-	c, res = testNewContext(
+	c = testNewContext(
 		testNextHandler("a"),
 		testAbortHandler("b"),
 		testNormalHandler("c"),
 	)
 	assert.Nil(t, c.Next())
-	assert.Equal(t, "<a><b/></a>", res.Body.String())
+	assert.Equal(t, "<a><b/></a>", string(c.Response.Body()))
 
-	c, res = testNewContext(
+	c = testNewContext(
 		testNextHandler("a"),
 		testErrorHandler("b"),
 		testNormalHandler("c"),
@@ -127,18 +125,16 @@ func TestContextNextAbort(t *testing.T) {
 	if assert.NotNil(t, err) {
 		assert.Equal(t, "error:b", err.Error())
 	}
-	assert.Equal(t, "<a><b/></a>", res.Body.String())
+	assert.Equal(t, "<a><b/></a>", string(c.Response.Body()))
 }
 
-func testNewContext(handlers ...Handler) (*Context, *httptest.ResponseRecorder) {
-	res := httptest.NewRecorder()
+func testNewContext(handlers ...Handler) *Context {
 	var ctx fasthttp.RequestCtx
 	ctx.Request.Header.SetMethod("GET")
 	ctx.Request.Header.SetRequestURI("http://127.0.0.1/users")
-	c := &Context{}
-	c.init(&ctx)
+	c := NewContext(&ctx)
 	c.handlers = handlers
-	return c, res
+	return c
 }
 
 func testNextHandler(tag string) Handler {
