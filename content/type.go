@@ -9,9 +9,9 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"io"
-	"net/http"
 
-	"github.com/go-ozzo/ozzo-routing"
+	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/valyala/fasthttp"
 )
 
 // MIME types
@@ -53,7 +53,7 @@ func TypeNegotiator(formats ...string) routing.Handler {
 	}
 
 	return func(c *routing.Context) error {
-		format := NegotiateContentType(c.Request, formats, formats[0])
+		format := NegotiateContentType(c.RequestCtx, formats, formats[0])
 		c.SetDataWriter(DataWriters[format])
 		return nil
 	}
@@ -62,8 +62,9 @@ func TypeNegotiator(formats ...string) routing.Handler {
 // JSONDataWriter sets the "Content-Type" response header as "application/json" and writes the given data in JSON format to the response.
 type JSONDataWriter struct{}
 
-func (w *JSONDataWriter) SetHeader(res http.ResponseWriter) {
-	res.Header().Set("Content-Type", "application/json")
+// SetHeader sets the "Content-Type" response header as "application/json".
+func (w *JSONDataWriter) SetHeader(h *fasthttp.ResponseHeader) {
+	h.SetContentType(JSON)
 }
 
 func (w *JSONDataWriter) Write(res io.Writer, data interface{}) (err error) {
@@ -75,10 +76,12 @@ func (w *JSONDataWriter) Write(res io.Writer, data interface{}) (err error) {
 // XMLDataWriter sets the "Content-Type" response header as "application/xml; charset=UTF-8" and writes the given data in XML format to the response.
 type XMLDataWriter struct{}
 
-func (w *XMLDataWriter) SetHeader(res http.ResponseWriter) {
-	res.Header().Set("Content-Type", "application/xml; charset=UTF-8")
+// SetHeader sets the "Content-Type" response header as "application/xml; charset=UTF-8".
+func (w *XMLDataWriter) SetHeader(h *fasthttp.ResponseHeader) {
+	h.SetContentType(XML + "; charset=UTF-8")
 }
 
+// Write writes the given data in XML format to the response.
 func (w *XMLDataWriter) Write(res io.Writer, data interface{}) (err error) {
 	var bytes []byte
 	if bytes, err = xml.Marshal(data); err != nil {
@@ -91,10 +94,12 @@ func (w *XMLDataWriter) Write(res io.Writer, data interface{}) (err error) {
 // HTMLDataWriter sets the "Content-Type" response header as "text/html; charset=UTF-8" and calls routing.DefaultDataWriter to write the given data to the response.
 type HTMLDataWriter struct{}
 
-func (w *HTMLDataWriter) SetHeader(res http.ResponseWriter) {
-	res.Header().Set("Content-Type", "text/html; charset=UTF-8")
+// SetHeader sets the "Content-Type" response header as "text/html; charset=UTF-8"
+func (w *HTMLDataWriter) SetHeader(h *fasthttp.ResponseHeader) {
+	h.SetContentType(HTML + "; charset=UTF-8")
 }
 
-func (w *HTMLDataWriter) Write(res http.ResponseWriter, data interface{}) error {
+// Write calls routing.DefaultDataWriter to write the given data to the response.
+func (w *HTMLDataWriter) Write(res io.Writer, data interface{}) error {
 	return routing.DefaultDataWriter.Write(res, data)
 }

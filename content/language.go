@@ -5,10 +5,10 @@
 package content
 
 import (
-	"net/http"
+	"golang.org/x/text/language"
 
-	"github.com/go-ozzo/ozzo-routing"
-	"github.com/golang/gddo/httputil/header"
+	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/valyala/fasthttp"
 )
 
 // Language is the key used to store and retrieve the chosen language in routing.Context
@@ -34,27 +34,24 @@ func LanguageNegotiator(languages ...string) routing.Handler {
 	defaultLanguage := languages[0]
 
 	return func(c *routing.Context) error {
-		language := negotiateLanguage(c.Request, languages, defaultLanguage)
+		language := negotiateLanguage(c.RequestCtx, languages, defaultLanguage)
 		c.Set(Language, language)
 		return nil
 	}
 }
 
 // negotiateLanguage negotiates the acceptable language according to the Accept-Language HTTP header.
-func negotiateLanguage(r *http.Request, offers []string, defaultOffer string) string {
-	bestOffer := defaultOffer
-	bestQ := -1.0
-	specs := header.ParseAccept(r.Header, "Accept-Language")
-	for _, offer := range offers {
-		for _, spec := range specs {
-			if spec.Q > bestQ && (spec.Value == "*" || spec.Value == offer) {
-				bestQ = spec.Q
-				bestOffer = offer
-			}
+func negotiateLanguage(ctx *fasthttp.RequestCtx, offers []string, defaultOffer string) string {
+	tags := make([]language.Tag, 0, len(offers))
+	for _, o := range offers {
+		if t, err := language.Parse(o); err == nil {
+			tags = append(tags, t)
 		}
 	}
-	if bestQ == 0 {
-		bestOffer = defaultOffer
+
+	accept, _, _ := language.ParseAcceptLanguage(string(ctx.Request.Header.Peek("Accept-Language")))
+	if _, i, c := language.NewMatcher(tags).Match(accept...); c != language.No {
+		return offers[i]
 	}
-	return bestOffer
+	return defaultOffer
 }

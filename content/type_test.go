@@ -5,74 +5,72 @@
 package content
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/go-ozzo/ozzo-routing"
+	"github.com/jackwhelpton/fasthttp-routing"
 	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
 )
 
 func TestJSONFormatter(t *testing.T) {
-	res := httptest.NewRecorder()
+	var ctx fasthttp.RequestCtx
 	w := &JSONDataWriter{}
-	w.SetHeader(res)
-	err := w.Write(res, "xyz")
+	w.SetHeader(&ctx.Response.Header)
+	err := w.Write(&ctx, "xyz")
 	assert.Nil(t, err)
-	assert.Equal(t, "application/json", res.Header().Get("Content-Type"))
-	assert.Equal(t, "\"xyz\"\n", res.Body.String())
+	assert.Equal(t, "application/json", string(ctx.Response.Header.ContentType()))
+	assert.Equal(t, "\"xyz\"\n", string(ctx.Response.Body()))
 }
 
 func TestXMLFormatter(t *testing.T) {
-	res := httptest.NewRecorder()
+	var ctx fasthttp.RequestCtx
 	w := &XMLDataWriter{}
-	w.SetHeader(res)
-	err := w.Write(res, "xyz")
+	w.SetHeader(&ctx.Response.Header)
+	err := w.Write(&ctx, "xyz")
 	assert.Nil(t, err)
-	assert.Equal(t, "application/xml; charset=UTF-8", res.Header().Get("Content-Type"))
-	assert.Equal(t, "<string>xyz</string>", res.Body.String())
+	assert.Equal(t, "application/xml; charset=UTF-8", string(ctx.Response.Header.ContentType()))
+	assert.Equal(t, "<string>xyz</string>", string(ctx.Response.Body()))
 }
 
 func TestHTMLFormatter(t *testing.T) {
-	res := httptest.NewRecorder()
+	var ctx fasthttp.RequestCtx
 	w := &HTMLDataWriter{}
-	w.SetHeader(res)
-	err := w.Write(res, "xyz")
+	w.SetHeader(&ctx.Response.Header)
+	err := w.Write(&ctx, "xyz")
 	assert.Nil(t, err)
-	assert.Equal(t, "text/html; charset=UTF-8", res.Header().Get("Content-Type"))
-	assert.Equal(t, "xyz", res.Body.String())
+	assert.Equal(t, "text/html; charset=UTF-8", string(ctx.Response.Header.ContentType()))
+	assert.Equal(t, "xyz", string(ctx.Response.Body()))
 }
 
 func TestTypeNegotiator(t *testing.T) {
-	req, _ := http.NewRequest("GET", "/users/", nil)
-	req.Header.Set("Accept", "application/xml")
+	var ctx fasthttp.RequestCtx
+	ctx.Request.Header.SetMethod("GET")
+	ctx.Request.SetRequestURI("/users/")
+	ctx.Request.Header.Set("Accept", "application/xml")
+	c := routing.NewContext(&ctx)
 
 	// test no arguments
-	res := httptest.NewRecorder()
-	c := routing.NewContext(res, req)
 	h := TypeNegotiator()
 	assert.Nil(t, h(c))
 	c.Write("xyz")
-	assert.Equal(t, "text/html; charset=UTF-8", res.Header().Get("Content-Type"))
-	assert.Equal(t, "xyz", res.Body.String())
+	assert.Equal(t, "text/html; charset=UTF-8", string(c.Response.Header.ContentType()))
+	assert.Equal(t, "xyz", string(c.Response.Body()))
+	ctx.Response.Reset()
 
 	// test format chosen based on Accept
-	res = httptest.NewRecorder()
-	c = routing.NewContext(res, req)
 	h = TypeNegotiator(JSON, XML)
 	assert.Nil(t, h(c))
 	assert.Nil(t, c.Write("xyz"))
-	assert.Equal(t, "application/xml; charset=UTF-8", res.Header().Get("Content-Type"))
-	assert.Equal(t, "<string>xyz</string>", res.Body.String())
+	assert.Equal(t, "application/xml; charset=UTF-8", string(c.Response.Header.ContentType()))
+	assert.Equal(t, "<string>xyz</string>", string(c.Response.Body()))
+	ctx.Response.Reset()
 
 	// test default format used when no match
-	req.Header.Set("Accept", "application/pdf")
-	res = httptest.NewRecorder()
-	c = routing.NewContext(res, req)
+	ctx.Request.Header.Set("Accept", "application/pdf")
 	assert.Nil(t, h(c))
 	assert.Nil(t, c.Write("xyz"))
-	assert.Equal(t, "application/json", res.Header().Get("Content-Type"))
-	assert.Equal(t, "\"xyz\"\n", res.Body.String())
+	assert.Equal(t, "application/json", string(c.Response.Header.ContentType()))
+	assert.Equal(t, "\"xyz\"\n", string(c.Response.Body()))
 
 	assert.Panics(t, func() {
 		TypeNegotiator("unknown")
@@ -88,52 +86,50 @@ type JSONDataWriter1 struct {
 	JSONDataWriter
 }
 
-func (w *JSONDataWriter1) SetHeader(res http.ResponseWriter) {
-	res.Header().Set("Content-Type", v1JSON)
+func (w *JSONDataWriter1) SetHeader(h *fasthttp.ResponseHeader) {
+	h.SetContentType(v1JSON)
 }
 
 type JSONDataWriter2 struct {
 	JSONDataWriter
 }
 
-func (w *JSONDataWriter2) SetHeader(res http.ResponseWriter) {
-	res.Header().Set("Content-Type", v2JSON)
+func (w *JSONDataWriter2) SetHeader(h *fasthttp.ResponseHeader) {
+	h.SetContentType(v2JSON)
 }
 
 func TestTypeNegotiatorWithVersion(t *testing.T) {
-
-	req, _ := http.NewRequest("GET", "/users/", nil)
-	req.Header.Set("Accept", "application/xml,"+v1JSON)
+	var ctx fasthttp.RequestCtx
+	ctx.Request.Header.SetMethod("GET")
+	ctx.Request.SetRequestURI("/users/")
+	ctx.Request.Header.Set("Accept", "application/xml,"+v1JSON)
+	c := routing.NewContext(&ctx)
 
 	// test no arguments
-	res := httptest.NewRecorder()
-	c := routing.NewContext(res, req)
 	h := TypeNegotiator()
 	assert.Nil(t, h(c))
 	c.Write("xyz")
-	assert.Equal(t, "text/html; charset=UTF-8", res.Header().Get("Content-Type"))
-	assert.Equal(t, "xyz", res.Body.String())
+	assert.Equal(t, "text/html; charset=UTF-8", string(c.Response.Header.ContentType()))
+	assert.Equal(t, "xyz", string(c.Response.Body()))
+	ctx.Response.Reset()
 
 	DataWriters[v1JSON] = &JSONDataWriter1{}
 	DataWriters[v2JSON] = &JSONDataWriter2{}
 
 	// test format chosen based on Accept
-	res = httptest.NewRecorder()
-	c = routing.NewContext(res, req)
 	h = TypeNegotiator(v2JSON, v1JSON, XML)
 	assert.Nil(t, h(c))
 	assert.Nil(t, c.Write("xyz"))
-	assert.Equal(t, "application/json;v=1", res.Header().Get("Content-Type"))
-	assert.Equal(t, `"xyz"`+"\n", res.Body.String())
+	assert.Equal(t, v1JSON, string(c.Response.Header.ContentType()))
+	assert.Equal(t, `"xyz"`+"\n", string(c.Response.Body()))
+	ctx.Response.Reset()
 
 	// test default format used when no match
-	req.Header.Set("Accept", "application/pdf")
-	res = httptest.NewRecorder()
-	c = routing.NewContext(res, req)
+	ctx.Request.Header.Set("Accept", "application/pdf")
 	assert.Nil(t, h(c))
 	assert.Nil(t, c.Write("xyz"))
-	assert.Equal(t, v2JSON, res.Header().Get("Content-Type"))
-	assert.Equal(t, "\"xyz\"\n", res.Body.String())
+	assert.Equal(t, v2JSON, string(c.Response.Header.ContentType()))
+	assert.Equal(t, "\"xyz\"\n", string(c.Response.Body()))
 
 	assert.Panics(t, func() {
 		TypeNegotiator("unknown")

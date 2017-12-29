@@ -4,9 +4,10 @@
 package content
 
 import (
-	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/valyala/fasthttp"
 )
 
 type AcceptRange struct {
@@ -30,14 +31,8 @@ func (a AcceptRange) RawString() string {
 //  accept-params  = weight *( accept-ext )
 //  accept-ext = OWS ";" OWS token [ "=" ( token / quoted-string ) ]
 
-func AcceptMediaTypes(r *http.Request) []AcceptRange {
-	result := []AcceptRange{}
-
-	for _, v := range r.Header["Accept"] {
-		result = append(result, ParseAcceptRanges(v)...)
-	}
-
-	return result
+func AcceptMediaTypes(ctx *fasthttp.RequestCtx) []AcceptRange {
+	return ParseAcceptRanges(string(ctx.Request.Header.Peek("Accept")))
 }
 
 func ParseAcceptRanges(accepts string) []AcceptRange {
@@ -121,8 +116,8 @@ func compareParams(params1 map[string]string, params2 map[string]string) (count 
 	return count
 }
 
-func NegotiateContentType(r *http.Request, offers []string, defaultOffer string) string {
-	accepts := AcceptMediaTypes(r)
+func NegotiateContentType(ctx *fasthttp.RequestCtx, offers []string, defaultOffer string) string {
+	accepts := AcceptMediaTypes(ctx)
 	offerRanges := []AcceptRange{}
 	for _, off := range offers {
 		offerRanges = append(offerRanges, ParseAcceptRange(off))

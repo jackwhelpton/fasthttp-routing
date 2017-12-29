@@ -5,21 +5,21 @@
 package content
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/go-ozzo/ozzo-routing"
+	"github.com/jackwhelpton/fasthttp-routing"
 	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
 )
 
 func TestLanguageNegotiator(t *testing.T) {
-	req, _ := http.NewRequest("GET", "/users/", nil)
-	req.Header.Set("Accept-Language", "ru-RU;q=0.6,ru;q=0.5,zh-CN;q=1.0,zh;q=0.9")
+	var ctx fasthttp.RequestCtx
+	ctx.Request.Header.SetMethod("GET")
+	ctx.Request.SetRequestURI("/users/")
+	ctx.Request.Header.Set("Accept-Language", "ru-RU;q=0.6,ru;q=0.5,zh-CN;q=1.0,zh;q=0.9")
+	c := routing.NewContext(&ctx)
 
 	// test no arguments
-	res := httptest.NewRecorder()
-	c := routing.NewContext(res, req)
 	h := LanguageNegotiator()
 	assert.Nil(t, h(c))
 	assert.Equal(t, "en-US", c.Get(Language))
@@ -32,7 +32,7 @@ func TestLanguageNegotiator(t *testing.T) {
 	assert.Nil(t, h(c))
 	assert.Equal(t, "en", c.Get(Language))
 
-	req.Header.Set("Accept-Language", "ru-RU;q=0")
+	ctx.Request.Header.Set("Accept-Language", "ru-RU;q=0")
 	h = LanguageNegotiator("en", "ru-RU")
 	assert.Nil(t, h(c))
 	assert.Equal(t, "en", c.Get(Language))
