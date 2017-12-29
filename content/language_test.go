@@ -17,22 +17,25 @@ func TestLanguageNegotiator(t *testing.T) {
 	ctx.Request.Header.SetMethod("GET")
 	ctx.Request.SetRequestURI("/users/")
 	ctx.Request.Header.Set("Accept-Language", "ru-RU;q=0.6,ru;q=0.5,zh-CN;q=1.0,zh;q=0.9")
-	c := routing.NewContext(&ctx)
 
 	// test no arguments
 	h := LanguageNegotiator()
+	c := routing.NewContext(&ctx)
 	assert.Nil(t, h(c))
 	assert.Equal(t, "en-US", c.Get(Language))
 
 	h = LanguageNegotiator("ru-RU", "ru", "zh", "zh-CN")
+	c = routing.NewContext(&ctx)
 	assert.Nil(t, h(c))
 	assert.Equal(t, "zh-CN", c.Get(Language))
 
 	h = LanguageNegotiator("en", "en-US")
+	c = routing.NewContext(&ctx)
 	assert.Nil(t, h(c))
 	assert.Equal(t, "en", c.Get(Language))
 
 	ctx.Request.Header.Set("Accept-Language", "ru-RU;q=0")
+	c = routing.NewContext(&ctx)
 	h = LanguageNegotiator("en", "ru-RU")
 	assert.Nil(t, h(c))
 	assert.Equal(t, "en", c.Get(Language))

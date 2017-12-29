@@ -7,11 +7,11 @@ package auth
 
 import (
 	"encoding/base64"
-	"net/http"
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/go-ozzo/ozzo-routing"
+	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/valyala/fasthttp"
 )
 
 // User is the key used to store and retrieve the user identity information in routing.Context
@@ -34,9 +34,8 @@ type BasicAuthFunc func(c *routing.Context, username, password string) (Identity
 //   import (
 //     "errors"
 //     "fmt"
-//     "net/http"
-//     "github.com/go-ozzo/ozzo-routing"
-//     "github.com/go-ozzo/ozzo-routing/auth"
+//     "github.com/jackwhelpton/fasthttp-routing"
+//     "github.com/jackwhelpton/fasthttp-routing/auth"
 //   )
 //   func main() {
 //     r := routing.New()
@@ -54,7 +53,7 @@ type BasicAuthFunc func(c *routing.Context, username, password string) (Identity
 //
 // By default, the auth realm is named as "API". You may customize it by specifying the realm parameter.
 //
-// When authentication fails, a "WWW-Authenticate" header will be sent, and an http.StatusUnauthorized
+// When authentication fails, a "WWW-Authenticate" header will be sent, and a fasthttp.StatusUnauthorized
 // error will be returned.
 func Basic(fn BasicAuthFunc, realm ...string) routing.Handler {
 	name := DefaultRealm
@@ -62,14 +61,14 @@ func Basic(fn BasicAuthFunc, realm ...string) routing.Handler {
 		name = realm[0]
 	}
 	return func(c *routing.Context) error {
-		username, password := parseBasicAuth(c.Request.Header.Get("Authorization"))
+		username, password := parseBasicAuth(string(c.Request.Header.Peek("Authorization")))
 		identity, e := fn(c, username, password)
 		if e == nil {
 			c.Set(User, identity)
 			return nil
 		}
-		c.Response.Header().Set("WWW-Authenticate", `Basic realm="`+name+`"`)
-		return routing.NewHTTPError(http.StatusUnauthorized, e.Error())
+		c.Response.Header.Set("WWW-Authenticate", `Basic realm="`+name+`"`)
+		return routing.NewHTTPError(fasthttp.StatusUnauthorized, e.Error())
 	}
 }
 
@@ -94,9 +93,8 @@ type TokenAuthFunc func(c *routing.Context, token string) (Identity, error)
 //   import (
 //     "errors"
 //     "fmt"
-//     "net/http"
-//     "github.com/go-ozzo/ozzo-routing"
-//     "github.com/go-ozzo/ozzo-routing/auth"
+//     "github.com/jackwhelpton/fasthttp-routing"
+//     "github.com/jackwhelpton/fasthttp-routing/auth"
 //   )
 //   func main() {
 //     r := routing.New()
@@ -114,7 +112,7 @@ type TokenAuthFunc func(c *routing.Context, token string) (Identity, error)
 //
 // By default, the auth realm is named as "API". You may customize it by specifying the realm parameter.
 //
-// When authentication fails, a "WWW-Authenticate" header will be sent, and an http.StatusUnauthorized
+// When authentication fails, a "WWW-Authenticate" header will be sent, and a fasthttp.StatusUnauthorized
 // error will be returned.
 func Bearer(fn TokenAuthFunc, realm ...string) routing.Handler {
 	name := DefaultRealm
@@ -122,14 +120,14 @@ func Bearer(fn TokenAuthFunc, realm ...string) routing.Handler {
 		name = realm[0]
 	}
 	return func(c *routing.Context) error {
-		token := parseBearerAuth(c.Request.Header.Get("Authorization"))
+		token := parseBearerAuth(string(c.Request.Header.Peek("Authorization")))
 		identity, e := fn(c, token)
 		if e == nil {
 			c.Set(User, identity)
 			return nil
 		}
-		c.Response.Header().Set("WWW-Authenticate", `Bearer realm="`+name+`"`)
-		return routing.NewHTTPError(http.StatusUnauthorized, e.Error())
+		c.Response.Header.Set("WWW-Authenticate", `Bearer realm="`+name+`"`)
+		return routing.NewHTTPError(fasthttp.StatusUnauthorized, e.Error())
 	}
 }
 
@@ -152,8 +150,8 @@ var TokenName = "access-token"
 //     "errors"
 //     "fmt"
 //     "net/http"
-//     "github.com/go-ozzo/ozzo-routing"
-//     "github.com/go-ozzo/ozzo-routing/auth"
+//     "github.com/jackwhelpton/fasthttp-routing/ozzo-routing"
+//     "github.com/jackwhelpton/fasthttp-routing/auth"
 //   )
 //   func main() {
 //     r := routing.New()
@@ -169,17 +167,17 @@ var TokenName = "access-token"
 //     })
 //   }
 //
-// When authentication fails, an http.StatusUnauthorized error will be returned.
+// When authentication fails, a fasthttp.StatusUnauthorized error will be returned.
 func Query(fn TokenAuthFunc, tokenName ...string) routing.Handler {
 	name := TokenName
 	if len(tokenName) > 0 {
 		name = tokenName[0]
 	}
 	return func(c *routing.Context) error {
-		token := c.Request.URL.Query().Get(name)
+		token := string(c.QueryArgs().Peek(name))
 		identity, err := fn(c, token)
 		if err != nil {
-			return routing.NewHTTPError(http.StatusUnauthorized, err.Error())
+			return routing.NewHTTPError(fasthttp.StatusUnauthorized, err.Error())
 		}
 		c.Set(User, identity)
 		return nil
@@ -214,7 +212,7 @@ func DefaultJWTTokenHandler(c *routing.Context, token *jwt.Token) error {
 // If both are successful, it will call a JWTTokenHandler to further handle the token. By default, the token
 // will be stored in the routing context with the key named "JWT". Other handlers can retrieve this token to obtain
 // the user identity information.
-// If the parsing or validation fails, a "WWW-Authenticate" header will be sent, and an http.StatusUnauthorized
+// If the parsing or validation fails, a "WWW-Authenticate" header will be sent, and a fasthttp.StatusUnauthorized
 // error will be returned.
 //
 // JWT can be used like the following:
@@ -222,10 +220,9 @@ func DefaultJWTTokenHandler(c *routing.Context, token *jwt.Token) error {
 //   import (
 //     "errors"
 //     "fmt"
-//     "net/http"
 //     "github.com/dgrijalva/jwt-go"
-//     "github.com/go-ozzo/ozzo-routing"
-//     "github.com/go-ozzo/ozzo-routing/auth"
+//     "github.com/jackwhelpton/fasthttp-routing"
+//     "github.com/jackwhelpton/fasthttp-routing/auth"
 //   )
 //   func main() {
 //     signingKey := "secret-key"
@@ -269,7 +266,7 @@ func JWT(verificationKey string, options ...JWTOptions) routing.Handler {
 		ValidMethods: []string{opt.SigningMethod},
 	}
 	return func(c *routing.Context) error {
-		header := c.Request.Header.Get("Authorization")
+		header := string(c.Request.Header.Peek("Authorization"))
 		message := ""
 		if opt.GetVerificationKey != nil {
 			verificationKey = opt.GetVerificationKey(c)
@@ -285,11 +282,11 @@ func JWT(verificationKey string, options ...JWTOptions) routing.Handler {
 			message = err.Error()
 		}
 
-		c.Response.Header().Set("WWW-Authenticate", `Bearer realm="`+opt.Realm+`"`)
+		c.Response.Header.Set("WWW-Authenticate", `Bearer realm="`+opt.Realm+`"`)
 		if message != "" {
-			return routing.NewHTTPError(http.StatusUnauthorized, message)
+			return routing.NewHTTPError(fasthttp.StatusUnauthorized, message)
 		}
-		return routing.NewHTTPError(http.StatusUnauthorized)
+		return routing.NewHTTPError(fasthttp.StatusUnauthorized)
 	}
 }
 
