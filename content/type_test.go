@@ -111,20 +111,20 @@ func TestTypeNegotiatorWithVersion(t *testing.T) {
 	c.Write("xyz")
 	assert.Equal(t, "text/html; charset=UTF-8", string(c.Response.Header.ContentType()))
 	assert.Equal(t, "xyz", string(c.Response.Body()))
-	ctx.Response.Reset()
 
 	DataWriters[v1JSON] = &JSONDataWriter1{}
 	DataWriters[v2JSON] = &JSONDataWriter2{}
 
 	// test format chosen based on Accept
+	ctx.Response.Reset()
 	h = TypeNegotiator(v2JSON, v1JSON, XML)
 	assert.Nil(t, h(c))
 	assert.Nil(t, c.Write("xyz"))
 	assert.Equal(t, v1JSON, string(c.Response.Header.ContentType()))
 	assert.Equal(t, `"xyz"`+"\n", string(c.Response.Body()))
-	ctx.Response.Reset()
 
 	// test default format used when no match
+	ctx.Response.Reset()
 	ctx.Request.Header.Set("Accept", "application/pdf")
 	assert.Nil(t, h(c))
 	assert.Nil(t, c.Write("xyz"))

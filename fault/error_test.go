@@ -3,70 +3,66 @@ package fault
 import (
 	"bytes"
 	"errors"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/go-ozzo/ozzo-routing"
+	"github.com/jackwhelpton/fasthttp-routing"
 	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
 )
 
 func TestErrorHandler(t *testing.T) {
 	var buf bytes.Buffer
 	h := ErrorHandler(getLogger(&buf))
 
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/users/", nil)
-	c := routing.NewContext(res, req, h, handler1, handler2)
+	var ctx fasthttp.RequestCtx
+	ctx.Request.Header.SetMethod("GET")
+	ctx.Request.SetRequestURI("/users/")
+	c := routing.NewContext(&ctx, h, handler1, handler2)
 	assert.Nil(t, c.Next())
-	assert.Equal(t, http.StatusInternalServerError, res.Code)
-	assert.Equal(t, "abc", res.Body.String())
+	assert.Equal(t, fasthttp.StatusInternalServerError, c.Response.StatusCode())
+	assert.Equal(t, "abc", string(c.Response.Body()))
 	assert.Equal(t, "abc", buf.String())
 
 	buf.Reset()
-	res = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/users/", nil)
-	c = routing.NewContext(res, req, h, handler2)
+	ctx.Response.Reset()
+	c = routing.NewContext(&ctx, h, handler2)
 	assert.Nil(t, c.Next())
-	assert.Equal(t, http.StatusOK, res.Code)
-	assert.Equal(t, "test", res.Body.String())
+	assert.Equal(t, fasthttp.StatusOK, c.Response.StatusCode())
+	assert.Equal(t, "test", string(c.Response.Body()))
 	assert.Equal(t, "", buf.String())
 
 	buf.Reset()
+	ctx.Response.Reset()
 	h = ErrorHandler(getLogger(&buf), convertError)
-	res = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/users/", nil)
-	c = routing.NewContext(res, req, h, handler1, handler2)
+	c = routing.NewContext(&ctx, h, handler1, handler2)
 	assert.Nil(t, c.Next())
-	assert.Equal(t, http.StatusInternalServerError, res.Code)
-	assert.Equal(t, "123", res.Body.String())
+	assert.Equal(t, fasthttp.StatusInternalServerError, c.Response.StatusCode())
+	assert.Equal(t, "123", string(c.Response.Body()))
 	assert.Equal(t, "abc", buf.String())
 
 	buf.Reset()
+	ctx.Response.Reset()
 	h = ErrorHandler(nil)
-	res = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/users/", nil)
-	c = routing.NewContext(res, req, h, handler1, handler2)
+	c = routing.NewContext(&ctx, h, handler1, handler2)
 	assert.Nil(t, c.Next())
-	assert.Equal(t, http.StatusInternalServerError, res.Code)
-	assert.Equal(t, "abc", res.Body.String())
+	assert.Equal(t, fasthttp.StatusInternalServerError, c.Response.StatusCode())
+	assert.Equal(t, "abc", string(c.Response.Body()))
 	assert.Equal(t, "", buf.String())
 }
 
 func Test_writeError(t *testing.T) {
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/users/", nil)
-	c := routing.NewContext(res, req)
+	var ctx fasthttp.RequestCtx
+	ctx.Request.Header.SetMethod("GET")
+	ctx.Request.SetRequestURI("/users/")
+	c := routing.NewContext(&ctx)
 	writeError(c, errors.New("abc"))
-	assert.Equal(t, http.StatusInternalServerError, res.Code)
-	assert.Equal(t, "abc", res.Body.String())
+	assert.Equal(t, fasthttp.StatusInternalServerError, ctx.Response.StatusCode())
+	assert.Equal(t, "abc", string(ctx.Response.Body()))
 
-	res = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/users/", nil)
-	c = routing.NewContext(res, req)
-	writeError(c, routing.NewHTTPError(http.StatusNotFound, "xyz"))
-	assert.Equal(t, http.StatusNotFound, res.Code)
-	assert.Equal(t, "xyz", res.Body.String())
+	ctx.Response.Reset()
+	writeError(c, routing.NewHTTPError(fasthttp.StatusNotFound, "xyz"))
+	assert.Equal(t, fasthttp.StatusNotFound, ctx.Response.StatusCode())
+	assert.Equal(t, "xyz", string(ctx.Response.Body()))
 }
 
 func convertError(c *routing.Context, err error) error {

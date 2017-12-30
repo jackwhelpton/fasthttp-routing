@@ -5,7 +5,7 @@
 // Package fault provides a panic and error handler for the ozzo routing package.
 package fault
 
-import "github.com/go-ozzo/ozzo-routing"
+import "github.com/jackwhelpton/fasthttp-routing"
 
 type (
 	// LogFunc logs a message using the given format and optional arguments.
@@ -22,7 +22,7 @@ type (
 //
 // The handler will recover from panics and render the recovered error or the error returned by a handler.
 // If the error implements routing.HTTPError, the handler will set the HTTP status code accordingly.
-// Otherwise the HTTP status is set as http.StatusInternalServerError. The handler will also write the error
+// Otherwise the HTTP status is set as fasthttp.StatusInternalServerError. The handler will also write the error
 // as the response body.
 //
 // A log function can be provided to log a message whenever an error is handled. If nil, no message will be logged.
@@ -32,8 +32,8 @@ type (
 //
 //     import (
 //         "log"
-//         "github.com/go-ozzo/ozzo-routing"
-//         "github.com/go-ozzo/ozzo-routing/fault"
+//         "github.com/jackwhelpton/fasthttp-routing"
+//         "github.com/jackwhelpton/fasthttp-routing/fault"
 //     )
 //
 //     r := routing.New()

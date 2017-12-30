@@ -208,24 +208,24 @@ func TestHandlers(t *testing.T) {
 	c := routing.NewContext(&ctx)
 	assert.Nil(t, h(c))
 	assert.Equal(t, "https://example.com", string(c.Response.Header.Peek(headerAllowOrigin)))
-	ctx.Response.Reset()
 
 	ctx.Request.Header.Reset()
 	ctx.Request.Header.SetMethod("PATCH")
 	ctx.Request.Header.Set("Origin", "https://example.com")
+	ctx.Response.Reset()
 	assert.Nil(t, h(c))
 	assert.Equal(t, "https://example.com", string(c.Response.Header.Peek(headerAllowOrigin)))
-	ctx.Response.Reset()
 
 	ctx.Request.Header.Reset()
 	ctx.Request.Header.SetMethod("PATCH")
+	ctx.Response.Reset()
 	assert.Nil(t, h(c))
 	assert.Equal(t, "", string(c.Response.Header.Peek(headerAllowOrigin)))
-	ctx.Response.Reset()
 
 	ctx.Request.Header.Reset()
 	ctx.Request.Header.SetMethod("OPTIONS")
 	ctx.Request.Header.Set("Origin", "https://example.com")
+	ctx.Response.Reset()
 	assert.Nil(t, h(c))
 	assert.Equal(t, "", string(c.Response.Header.Peek(headerAllowOrigin)))
 }

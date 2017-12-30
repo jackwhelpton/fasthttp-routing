@@ -50,8 +50,8 @@ func TestBasic(t *testing.T) {
 	}
 	assert.Equal(t, `Basic realm="App"`, string(c.Response.Header.Peek("WWW-Authenticate")))
 	assert.Nil(t, c.Get(User))
-	ctx.Response.Reset()
 
+	ctx.Response.Reset()
 	ctx.Request.Header.Set("Authorization", "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==")
 	err = h(c)
 	assert.Nil(t, err)
@@ -94,16 +94,16 @@ func TestBearer(t *testing.T) {
 	}
 	assert.Equal(t, `Bearer realm="App"`, string(c.Response.Header.Peek("WWW-Authenticate")))
 	assert.Nil(t, c.Get(User))
-	ctx.Response.Reset()
 
+	ctx.Response.Reset()
 	ctx.Request.Header.Set("Authorization", "Bearer QWxhZGRpbjpvcGVuIHNlc2FtZQ==")
 	c = routing.NewContext(&ctx)
 	err = h(c)
 	assert.Nil(t, err)
 	assert.Equal(t, "", string(c.Response.Header.Peek("WWW-Authenticate")))
 	assert.Equal(t, "yes", c.Get(User))
-	ctx.Response.Reset()
 
+	ctx.Response.Reset()
 	ctx.Request.Header.Set("Authorization", "Bearer QW")
 	c = routing.NewContext(&ctx)
 	err = h(c)
@@ -125,8 +125,8 @@ func TestQuery(t *testing.T) {
 		assert.Equal(t, "no", err.Error())
 	}
 	assert.Nil(t, c.Get(User))
-	ctx.Response.Reset()
 
+	ctx.Response.Reset()
 	ctx.Request.SetRequestURI("/users?token=Aladdin:open sesame")
 	err = h(c)
 	assert.Nil(t, err)

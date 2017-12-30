@@ -6,14 +6,13 @@
 package fault
 
 import (
-	"net/http"
-
-	"github.com/go-ozzo/ozzo-routing"
+	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/valyala/fasthttp"
 )
 
 // ErrorHandler returns a handler that handles errors returned by the handlers following this one.
 // If the error implements routing.HTTPError, the handler will set the HTTP status code accordingly.
-// Otherwise the HTTP status is set as http.StatusInternalServerError. The handler will also write the error
+// Otherwise the HTTP status is set as fasthttp.StatusInternalServerError. The handler will also write the error
 // as the response body.
 //
 // A log function can be provided to log a message whenever an error is handled. If nil, no message will be logged.
@@ -23,8 +22,8 @@ import (
 //
 //     import (
 //         "log"
-//         "github.com/go-ozzo/ozzo-routing"
-//         "github.com/go-ozzo/ozzo-routing/fault"
+//         "github.com/jackwhelpton/fasthttp-routing"
+//         "github.com/jackwhelpton/fasthttp-routing/fault"
 //     )
 //
 //     r := routing.New()
@@ -54,12 +53,12 @@ func ErrorHandler(logf LogFunc, errorf ...ConvertErrorFunc) routing.Handler {
 
 // writeError writes the error to the response.
 // If the error implements HTTPError, it will set the HTTP status as the result of the StatusCode() call of the error.
-// Otherwise, the HTTP status will be set as http.StatusInternalServerError.
+// Otherwise, the HTTP status will be set as fasthttp.StatusInternalServerError.
 func writeError(c *routing.Context, err error) {
 	if httpError, ok := err.(routing.HTTPError); ok {
-		c.Response.WriteHeader(httpError.StatusCode())
+		c.Response.Header.SetStatusCode(httpError.StatusCode())
 	} else {
-		c.Response.WriteHeader(http.StatusInternalServerError)
+		c.Response.Header.SetStatusCode(fasthttp.StatusInternalServerError)
 	}
 	c.Write(err)
 }
