@@ -1,8 +1,8 @@
 # fasthttp-routing
 
 [![GoDoc](https://godoc.org/github.com/jackwhelpton/fasthttp-routing?status.png)](http://godoc.org/github.com/jackwhelpton/fasthttp-routing)
-[![Build Status](https://travis-ci.org/go-ozzo/ozzo-routing.svg?branch=master)](https://travis-ci.org/go-ozzo/ozzo-routing)
-[![Coverage Status](https://coveralls.io/repos/github/go-ozzo/ozzo-routing/badge.svg?branch=master)](https://coveralls.io/github/go-ozzo/ozzo-routing?branch=master)
+[![Build Status](https://travis-ci.org/jackwhelpton/fasthttp-routing.svg?branch=master)](https://travis-ci.org/jackwhelpton/fasthttp-routing)
+[![Coverage Status](https://coveralls.io/repos/github/jackwhelpton/fasthttp-routing/badge.svg?branch=master)](https://coveralls.io/github/jackwhelpton/fasthttp-routing?branch=master)
 [![Go Report](https://goreportcard.com/badge/github.com/jackwhelpton/fasthttp-routing)](https://goreportcard.com/report/github.com/jackwhelpton/fasthttp-routing)
 
 ## Description

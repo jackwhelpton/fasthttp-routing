@@ -26,13 +26,13 @@ func TestRemover(t *testing.T) {
 
 	ctx.Request.SetRequestURI("/")
 	ctx.Response.Reset()
-	err = h(c)
+	h(c)
 	assert.Equal(t, fasthttp.StatusOK, c.Response.StatusCode())
 	assert.Equal(t, "", string(c.Response.Header.Peek("Location")))
 
 	ctx.Request.SetRequestURI("/users")
 	ctx.Response.Reset()
-	err = h(c)
+	h(c)
 	assert.Equal(t, fasthttp.StatusOK, c.Response.StatusCode())
 	assert.Equal(t, "", string(c.Response.Header.Peek("Location")))
 
@@ -40,7 +40,7 @@ func TestRemover(t *testing.T) {
 	ctx.Request.Header.SetMethod("POST")
 	ctx.Request.SetRequestURI("/users/")
 	ctx.Response.Reset()
-	err = h(c)
+	h(c)
 	assert.Equal(t, fasthttp.StatusTemporaryRedirect, c.Response.StatusCode())
 	assert.Equal(t, "/users", string(c.Response.Header.Peek("Location")))
 }
