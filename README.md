@@ -12,8 +12,7 @@ fast and powerful routing features for the high-performance [fasthttp](https://g
 The package has the following features:
 
 * middleware pipeline architecture, similar to that of the [Express framework](http://expressjs.com).
-* extremely fast request routing with zero dynamic memory allocation (the performance is comparable to that of [httprouter](https://github.com/julienschmidt/httprouter) and
-[gin](https://github.com/gin-gonic/gin), see the [performance comparison below](#benchmarks))
+* extremely fast request routing with zero dynamic memory allocation
 * modular code organization through route grouping
 * flexible URL path matching, supporting URL parameters and regular expressions
 * URL creation according to the predefined routes
