@@ -2,40 +2,44 @@
 // Use of this source code is governed by a MIT-style
 // license that can be found in the LICENSE file.
 
-// Package slash provides a trailing slash remover handler for the ozzo routing package.
+// Package slash provides a trailing slash remover handler for the fasthttp-routing package.
 package slash
 
 import (
-	"net/http"
 	"strings"
 
-	"github.com/go-ozzo/ozzo-routing"
+	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/valyala/fasthttp"
 )
 
 // Remover returns a handler that removes the trailing slash (if any) from the requested URL.
 // The handler will redirect the browser to the new URL without the trailing slash.
-// The status parameter should be either http.StatusMovedPermanently (301) or http.StatusFound (302), which is to
-// be used for redirecting GET requests. For other requests, the status code will be http.StatusTemporaryRedirect (307).
+// The status parameter should be either fasthttp.StatusMovedPermanently (301) or fasthttp.StatusFound (302),
+// which is to be used for redirecting GET requests. For other requests, the status code will be
+// fasthttp.StatusTemporaryRedirect (307).
 // If the original URL has no trailing slash, the handler will do nothing. For example,
 //
 //     import (
-//         "net/http"
-//         "github.com/go-ozzo/ozzo-routing"
-//         "github.com/go-ozzo/ozzo-routing/slash"
+//         "github.com/jackwhelpton/fasthttp-routing"
+//         "github.com/jackwhelpton/fasthttp-routing/slash"
+//         "github.com/valyala/fasthttp"
 //     )
 //
 //     r := routing.New()
-//     r.Use(slash.Remover(http.StatusMovedPermanently))
+//     r.Use(slash.Remover(fasthttp.StatusMovedPermanently))
 //
 // Note that Remover relies on HTTP redirection to remove the trailing slashes.
 // If you do not want redirection, please set `Router.IgnoreTrailingSlash` to be true without using Remover.
 func Remover(status int) routing.Handler {
 	return func(c *routing.Context) error {
-		if c.Request.URL.Path != "/" && strings.HasSuffix(c.Request.URL.Path, "/") {
-			if c.Request.Method != "GET" {
-				status = http.StatusTemporaryRedirect
+		if path := string(c.Request.URI().Path()); path != "/" && strings.HasSuffix(path, "/") {
+			if !c.IsGet() {
+				status = fasthttp.StatusTemporaryRedirect
 			}
-			http.Redirect(c.Response, c.Request, strings.TrimRight(c.Request.URL.Path, "/"), status)
+			// c.Redirect performs additional path normalization that is not desired,
+			// so the Location header and status code are set explicitly instead.
+			c.Response.Header.Set("Location", strings.TrimRight(path, "/"))
+			c.Response.SetStatusCode(status)
 			c.Abort()
 		}
 		return nil
