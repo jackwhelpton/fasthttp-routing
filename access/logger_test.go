@@ -26,13 +26,10 @@ func TestCustomLogger(t *testing.T) {
 	}
 	h := CustomLogger(customFunc)
 	ctx := &fasthttp.RequestCtx{}
-
-	req := &fasthttp.Request{}
-	req.Header.SetMethod("GET")
-	req.SetRequestURI("http://127.0.0.1/users")
-
 	ip, _ := net.ResolveIPAddr("ip", "192.168.100.1")
-	ctx.Init(req, ip, nil)
+	ctx.Init(&fasthttp.Request{}, ip, nil)
+	ctx.Request.Header.SetMethod("GET")
+	ctx.Request.SetRequestURI("http://127.0.0.1/users")
 
 	c := routing.NewContext(ctx, h, handler1)
 	assert.NotNil(t, c.Next())
@@ -43,13 +40,10 @@ func TestLogger(t *testing.T) {
 	var buf bytes.Buffer
 	h := Logger(getLogger(&buf))
 	ctx := &fasthttp.RequestCtx{}
-
-	req := &fasthttp.Request{}
-	req.Header.SetMethod("GET")
-	req.SetRequestURI("http://127.0.0.1/users")
-
 	ip, _ := net.ResolveIPAddr("ip", "192.168.100.1")
-	ctx.Init(req, ip, nil)
+	ctx.Init(&fasthttp.Request{}, ip, nil)
+	ctx.Request.Header.SetMethod("GET")
+	ctx.Request.SetRequestURI("http://127.0.0.1/users")
 
 	c := routing.NewContext(ctx, h, handler1)
 	assert.NotNil(t, c.Next())
@@ -58,15 +52,12 @@ func TestLogger(t *testing.T) {
 
 func TestGetClientIP(t *testing.T) {
 	ctx := &fasthttp.RequestCtx{}
-
-	req := &fasthttp.Request{}
-	req.Header.SetMethod("GET")
-	req.SetRequestURI("/users/")
-	req.Header.Set("X-Real-IP", "192.168.100.1")
-	req.Header.Set("X-Forwarded-For", "192.168.100.2")
-
 	ip, _ := net.ResolveIPAddr("ip", "192.168.100.3")
-	ctx.Init(req, ip, nil)
+	ctx.Init(&fasthttp.Request{}, ip, nil)
+	ctx.Request.Header.SetMethod("GET")
+	ctx.Request.SetRequestURI("/users/")
+	ctx.Request.Header.Set("X-Real-IP", "192.168.100.1")
+	ctx.Request.Header.Set("X-Forwarded-For", "192.168.100.2")
 
 	assert.Equal(t, "192.168.100.1", GetClientIP(ctx))
 	ctx.Request.Header.Del("X-Real-IP")
@@ -75,8 +66,8 @@ func TestGetClientIP(t *testing.T) {
 	assert.Equal(t, "192.168.100.3", GetClientIP(ctx))
 
 	tcp, _ := net.ResolveTCPAddr("tcp", "192.168.100.3:8080")
-	req.Header.Reset()
-	ctx.Init(req, tcp, nil)
+	ctx.Request.Header.Reset()
+	ctx.Init(&ctx.Request, tcp, nil)
 	assert.Equal(t, "192.168.100.3", GetClientIP(ctx))
 }
 

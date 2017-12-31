@@ -5,14 +5,21 @@
 package file
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/go-ozzo/ozzo-routing"
+	"github.com/jackwhelpton/fasthttp-routing"
 	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
 )
+
+type (
+	testLogger struct{ *testing.T }
+)
+
+func (l *testLogger) Printf(format string, v ...interface{}) {
+	l.Logf(format, v...)
+}
 
 func TestParsePathMap(t *testing.T) {
 	tests := []struct {
@@ -69,38 +76,35 @@ func TestMatchPath(t *testing.T) {
 
 func TestContent(t *testing.T) {
 	h := Content("testdata/index.html")
-	req, _ := http.NewRequest("GET", "/index.html", nil)
-	res := httptest.NewRecorder()
-	c := routing.NewContext(res, req)
+	var ctx fasthttp.RequestCtx
+	ctx.Request.Header.SetMethod("GET")
+	ctx.Request.SetRequestURI("/index.html")
+	c := routing.NewContext(&ctx)
 	err := h(c)
 	assert.Nil(t, err)
-	assert.Equal(t, "hello\n", res.Body.String())
-
-	h = Content("testdata/index.html")
-	req, _ = http.NewRequest("POST", "/index.html", nil)
-	res = httptest.NewRecorder()
-	c = routing.NewContext(res, req)
-	err = h(c)
-	if assert.NotNil(t, err) {
-		assert.Equal(t, http.StatusMethodNotAllowed, err.(routing.HTTPError).StatusCode())
-	}
+	assert.Equal(t, "hello\n", string(ctx.Response.Body()))
 
 	h = Content("testdata/index.go")
-	req, _ = http.NewRequest("GET", "/index.html", nil)
-	res = httptest.NewRecorder()
-	c = routing.NewContext(res, req)
+	ctx.Response.Reset()
 	err = h(c)
 	if assert.NotNil(t, err) {
-		assert.Equal(t, http.StatusNotFound, err.(routing.HTTPError).StatusCode())
+		assert.Equal(t, fasthttp.StatusNotFound, err.(routing.HTTPError).StatusCode())
 	}
 
 	h = Content("testdata/css")
-	req, _ = http.NewRequest("GET", "/index.html", nil)
-	res = httptest.NewRecorder()
-	c = routing.NewContext(res, req)
+	ctx.Response.Reset()
 	err = h(c)
 	if assert.NotNil(t, err) {
-		assert.Equal(t, http.StatusNotFound, err.(routing.HTTPError).StatusCode())
+		assert.Equal(t, fasthttp.StatusNotFound, err.(routing.HTTPError).StatusCode())
+	}
+
+	h = Content("testdata/index.html")
+	ctx.Request.Header.Reset()
+	ctx.Request.Header.SetMethod("POST")
+	ctx.Response.Reset()
+	err = h(c)
+	if assert.NotNil(t, err) {
+		assert.Equal(t, fasthttp.StatusMethodNotAllowed, err.(routing.HTTPError).StatusCode())
 	}
 }
 
@@ -114,23 +118,27 @@ func TestServer(t *testing.T) {
 	}{
 		{"t1", "GET", "/css/main.css", 0, "body {}\n"},
 		{"t2", "HEAD", "/css/main.css", 0, ""},
-		{"t3", "GET", "/css/main2.css", http.StatusNotFound, ""},
-		{"t4", "POST", "/css/main.css", http.StatusMethodNotAllowed, ""},
-		{"t5", "GET", "/css", http.StatusNotFound, ""},
+		{"t3", "GET", "/css/main2.css", fasthttp.StatusNotFound, ""},
+		{"t4", "POST", "/css/main.css", fasthttp.StatusMethodNotAllowed, ""},
+		{"t5", "GET", "/css", fasthttp.StatusNotFound, ""},
 	}
 
+	ctx := fasthttp.RequestCtx{}
+	ctx.Init(&fasthttp.Request{}, nil, newTestLogger(t))
+	c := routing.NewContext(&ctx)
+
 	for _, test := range tests {
-		req, _ := http.NewRequest(test.method, test.url, nil)
-		res := httptest.NewRecorder()
-		c := routing.NewContext(res, req)
+		ctx.Request.Header.Reset()
+		ctx.Request.Header.SetMethod(test.method)
+		ctx.Request.SetRequestURI(test.url)
+		ctx.Response.Reset()
+
 		err := h(c)
 		if test.status == 0 {
 			assert.Nil(t, err, test.id)
-			assert.Equal(t, test.body, res.Body.String(), test.id)
-		} else {
-			if assert.NotNil(t, err, test.id) {
-				assert.Equal(t, test.status, err.(routing.HTTPError).StatusCode(), test.id)
-			}
+			assert.Equal(t, test.body, string(c.Response.Body()), test.id)
+		} else if assert.NotNil(t, err, test.id) {
+			assert.Equal(t, test.status, err.(routing.HTTPError).StatusCode(), test.id)
 		}
 	}
 
@@ -141,18 +149,16 @@ func TestServer(t *testing.T) {
 		},
 	})
 
-	req, _ := http.NewRequest("GET", "/css/main.css", nil)
-	res := httptest.NewRecorder()
-	c := routing.NewContext(res, req)
+	ctx.Request.SetRequestURI("/css/main.css")
+	ctx.Response.Reset()
 	err := h(c)
 	assert.NotNil(t, err)
 
-	req, _ = http.NewRequest("GET", "/css", nil)
-	res = httptest.NewRecorder()
-	c = routing.NewContext(res, req)
+	ctx.Request.SetRequestURI("/css")
+	ctx.Response.Reset()
 	err = h(c)
 	assert.Nil(t, err)
-	assert.Equal(t, "css.html\n", res.Body.String())
+	assert.Equal(t, "css.html\n", string(ctx.Response.Body()))
 
 	{
 		// with CatchAll option
@@ -164,24 +170,29 @@ func TestServer(t *testing.T) {
 			},
 		})
 
-		req, _ := http.NewRequest("GET", "/css/main.css", nil)
-		res := httptest.NewRecorder()
-		c := routing.NewContext(res, req)
+		ctx := fasthttp.RequestCtx{}
+		ctx.Init(&fasthttp.Request{}, nil, newTestLogger(t))
+		ctx.Request.Header.SetMethod("GET")
+		ctx.Request.SetRequestURI("/css/main.css")
+		c := routing.NewContext(&ctx)
+
 		err := h(c)
 		assert.NotNil(t, err)
 
-		req, _ = http.NewRequest("GET", "/css", nil)
-		res = httptest.NewRecorder()
-		c = routing.NewContext(res, req)
+		ctx.Request.SetRequestURI("/css")
+		ctx.Response.Reset()
 		err = h(c)
 		assert.Nil(t, err)
-		assert.Equal(t, "css.html\n", res.Body.String())
+		assert.Equal(t, "css.html\n", string(ctx.Response.Body()))
 
-		req, _ = http.NewRequest("GET", "/css2", nil)
-		res = httptest.NewRecorder()
-		c = routing.NewContext(res, req)
+		ctx.Request.SetRequestURI("/css2")
+		ctx.Response.Reset()
 		err = h(c)
 		assert.Nil(t, err)
-		assert.Equal(t, "hello\n", res.Body.String())
+		assert.Equal(t, "hello\n", string(ctx.Response.Body()))
 	}
+}
+
+func newTestLogger(t *testing.T) *testLogger {
+	return &testLogger{t}
 }

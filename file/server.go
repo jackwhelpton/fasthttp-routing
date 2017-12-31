@@ -6,13 +6,13 @@
 package file
 
 import (
-	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
-	"github.com/go-ozzo/ozzo-routing"
+	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/valyala/fasthttp"
 )
 
 // ServerOptions defines the possible options for the Server handler.
@@ -57,8 +57,8 @@ func init() {
 //
 //     import (
 //         "log"
-//         "github.com/go-ozzo/ozzo-routing"
-//         "github.com/go-ozzo/ozzo-routing/file"
+//         "github.com/jackwhelpton/fasthttp-routing"
+//         "github.com/jackwhelpton/fasthttp-routing/file"
 //     )
 //
 //     r := routing.New()
@@ -74,64 +74,37 @@ func Server(pathMap PathMap, opts ...ServerOptions) routing.Handler {
 	if !filepath.IsAbs(options.RootPath) {
 		options.RootPath = filepath.Join(RootPath, options.RootPath)
 	}
+	fs := &fasthttp.FS{
+		Root:               options.RootPath,
+		IndexNames:         []string{options.IndexFile},
+		GenerateIndexPages: false,
+	}
+	h := fs.NewRequestHandler()
+
 	from, to := parsePathMap(pathMap)
 
-	// security measure: limit the files within options.RootPath
-	dir := http.Dir(options.RootPath)
-
 	return func(c *routing.Context) error {
-		if c.Request.Method != "GET" && c.Request.Method != "HEAD" {
-			return routing.NewHTTPError(http.StatusMethodNotAllowed)
+		if !c.IsGet() && !c.IsHead() {
+			return routing.NewHTTPError(fasthttp.StatusMethodNotAllowed)
 		}
-		path, found := matchPath(c.Request.URL.Path, from, to)
-		if !found || options.Allow != nil && !options.Allow(c, path) {
-			return routing.NewHTTPError(http.StatusNotFound)
+		p, found := matchPath(string(c.Request.URI().Path()), from, to)
+		if !found || options.Allow != nil && !options.Allow(c, p) {
+			return routing.NewHTTPError(fasthttp.StatusNotFound)
 		}
-
-		var (
-			file  http.File
-			fstat os.FileInfo
-			err   error
-		)
-
-		if file, err = dir.Open(path); err != nil {
-			if options.CatchAllFile != "" {
-				return serveFile(c, dir, options.CatchAllFile)
-			}
-			return routing.NewHTTPError(http.StatusNotFound, err.Error())
+		c.Request.SetRequestURI(p)
+		h(c.RequestCtx)
+		if c.Response.StatusCode() == fasthttp.StatusOK {
+			return nil
 		}
-		defer file.Close()
-
-		if fstat, err = file.Stat(); err != nil {
-			return routing.NewHTTPError(http.StatusNotFound, err.Error())
+		if options.CatchAllFile != "" {
+			c.Request.SetRequestURI(options.CatchAllFile)
+			h(c.RequestCtx)
 		}
-
-		if fstat.IsDir() {
-			if options.IndexFile == "" {
-				return routing.NewHTTPError(http.StatusNotFound)
-			}
-			return serveFile(c, dir, filepath.Join(path, options.IndexFile))
+		if c.Response.StatusCode() == fasthttp.StatusOK {
+			return nil
 		}
-
-		http.ServeContent(c.Response, c.Request, path, fstat.ModTime(), file)
-		return nil
+		return routing.NewHTTPError(fasthttp.StatusNotFound)
 	}
-}
-
-func serveFile(c *routing.Context, dir http.Dir, path string) error {
-	file, err := dir.Open(path)
-	if err != nil {
-		return routing.NewHTTPError(http.StatusNotFound, err.Error())
-	}
-	defer file.Close()
-	fstat, err := file.Stat()
-	if err != nil {
-		return routing.NewHTTPError(http.StatusNotFound, err.Error())
-	} else if fstat.IsDir() {
-		return routing.NewHTTPError(http.StatusNotFound)
-	}
-	http.ServeContent(c.Response, c.Request, path, fstat.ModTime(), file)
-	return nil
 }
 
 // Content returns a handler that serves the content of the specified file as the response.
@@ -143,21 +116,22 @@ func Content(path string) routing.Handler {
 		path = filepath.Join(RootPath, path)
 	}
 	return func(c *routing.Context) error {
-		if c.Request.Method != "GET" && c.Request.Method != "HEAD" {
-			return routing.NewHTTPError(http.StatusMethodNotAllowed)
+		if !c.IsGet() && !c.IsHead() {
+			return routing.NewHTTPError(fasthttp.StatusMethodNotAllowed)
 		}
 		file, err := os.Open(path)
 		if err != nil {
-			return routing.NewHTTPError(http.StatusNotFound, err.Error())
+			return routing.NewHTTPError(fasthttp.StatusNotFound, err.Error())
 		}
 		defer file.Close()
 		fstat, err := file.Stat()
 		if err != nil {
-			return routing.NewHTTPError(http.StatusNotFound, err.Error())
-		} else if fstat.IsDir() {
-			return routing.NewHTTPError(http.StatusNotFound)
+			return routing.NewHTTPError(fasthttp.StatusNotFound, err.Error())
 		}
-		http.ServeContent(c.Response, c.Request, path, fstat.ModTime(), file)
+		if fstat.IsDir() {
+			return routing.NewHTTPError(fasthttp.StatusNotFound)
+		}
+		fasthttp.ServeFile(c.RequestCtx, path)
 		return nil
 	}
 }
