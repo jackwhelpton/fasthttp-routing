@@ -7,7 +7,6 @@ package routing
 
 import (
 	"bytes"
-	"net/http"
 	"net/url"
 	"sort"
 	"strings"
@@ -136,7 +135,7 @@ func (r *Router) handleError(c *Context, err error) {
 	if httpError, ok := err.(HTTPError); ok {
 		c.Error(httpError.Error(), httpError.StatusCode())
 	} else {
-		c.Error(err.Error(), http.StatusInternalServerError)
+		c.Error(err.Error(), fasthttp.StatusInternalServerError)
 	}
 }
 
@@ -197,7 +196,7 @@ func (r *Router) normalizeRequestPath(path string) string {
 
 // NotFoundHandler returns a 404 HTTP error indicating a request has no matching route.
 func NotFoundHandler(*Context) error {
-	return NewHTTPError(http.StatusNotFound)
+	return NewHTTPError(fasthttp.StatusNotFound)
 }
 
 // MethodNotAllowedHandler handles the situation when a request has matching route without matching HTTP method.
@@ -218,7 +217,7 @@ func MethodNotAllowedHandler(c *Context) error {
 	sort.Strings(ms)
 	c.Response.Header.Set("Allow", strings.Join(ms, ", "))
 	if !bytes.Equal(c.Method(), strOptions) {
-		c.SetStatusCode(http.StatusMethodNotAllowed)
+		c.SetStatusCode(fasthttp.StatusMethodNotAllowed)
 	}
 	c.Abort()
 	return nil

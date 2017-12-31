@@ -1,14 +1,15 @@
 package routing_test
 
 import (
-	"github.com/go-ozzo/ozzo-routing"
-	"github.com/go-ozzo/ozzo-routing/access"
-	"github.com/go-ozzo/ozzo-routing/content"
-	"github.com/go-ozzo/ozzo-routing/fault"
-	"github.com/go-ozzo/ozzo-routing/file"
-	"github.com/go-ozzo/ozzo-routing/slash"
 	"log"
-	"net/http"
+
+	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/jackwhelpton/fasthttp-routing/access"
+	"github.com/jackwhelpton/fasthttp-routing/content"
+	"github.com/jackwhelpton/fasthttp-routing/fault"
+	"github.com/jackwhelpton/fasthttp-routing/file"
+	"github.com/jackwhelpton/fasthttp-routing/slash"
+	"github.com/valyala/fasthttp"
 )
 
 func Example() {
@@ -17,7 +18,7 @@ func Example() {
 	router.Use(
 		// all these handlers are shared by every route
 		access.Logger(log.Printf),
-		slash.Remover(http.StatusMovedPermanently),
+		slash.Remover(fasthttp.StatusMovedPermanently),
 		fault.Recovery(log.Printf),
 	)
 
@@ -44,6 +45,5 @@ func Example() {
 		"/": "/ui/",
 	}))
 
-	http.Handle("/", router)
-	http.ListenAndServe(":8080", nil)
+	fasthttp.ListenAndServe(":8080", router.HandleRequest)
 }

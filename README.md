@@ -1,16 +1,15 @@
-# ozzo-routing
+# fasthttp-routing
 
-[![GoDoc](https://godoc.org/github.com/go-ozzo/ozzo-routing?status.png)](http://godoc.org/github.com/go-ozzo/ozzo-routing)
+[![GoDoc](https://godoc.org/github.com/jackwhelpton/fasthttp-routing?status.png)](http://godoc.org/github.com/jackwhelpton/fasthttp-routing)
 [![Build Status](https://travis-ci.org/go-ozzo/ozzo-routing.svg?branch=master)](https://travis-ci.org/go-ozzo/ozzo-routing)
 [![Coverage Status](https://coveralls.io/repos/github/go-ozzo/ozzo-routing/badge.svg?branch=master)](https://coveralls.io/github/go-ozzo/ozzo-routing?branch=master)
-[![Go Report](https://goreportcard.com/badge/github.com/go-ozzo/ozzo-routing)](https://goreportcard.com/report/github.com/go-ozzo/ozzo-routing)
-
-**You may consider using [golang-restful-starter-kit](https://github.com/qiangxue/golang-restful-starter-kit) to jumpstart your new RESTful applications with ozzo-routing.**
+[![Go Report](https://goreportcard.com/badge/github.com/jackwhelpton/fasthttp-routing)](https://goreportcard.com/report/github.com/jackwhelpton/fasthttp-routing)
 
 ## Description
 
-ozzo-routing is a Go package that provides high performance and powerful HTTP routing capabilities for Web applications.
-It has the following features:
+fasthttp-routing is a Go package that is adapted from [ozzo-routing](https://github.com/go-ozzo/ozzo-routing) to provide
+fast and powerful routing features for the high-performance [fasthttp](https://github.com/valyala/fasthttp) server.
+The package has the following features:
 
 * middleware pipeline architecture, similar to that of the [Express framework](http://expressjs.com).
 * extremely fast request routing with zero dynamic memory allocation (the performance is comparable to that of [httprouter](https://github.com/julienschmidt/httprouter) and
@@ -18,10 +17,7 @@ It has the following features:
 * modular code organization through route grouping
 * flexible URL path matching, supporting URL parameters and regular expressions
 * URL creation according to the predefined routes
-* compatible with `http.Handler` and `http.HandlerFunc`
 * ready-to-use handlers sufficient for building RESTful APIs
-
-If you are using [fasthttp](https://github.com/valyala/fasthttp), you may use a similar routing package [fasthttp-routing](https://github.com/qiangxue/fasthttp-routing) which is adapted from ozzo-routing.
 
 ## Requirements
 
@@ -32,18 +28,16 @@ Go 1.7 or above.
 Run the following command to install the package:
 
 ```
-go get github.com/go-ozzo/ozzo-routing
+go get github.com/jackwhelpton/fasthttp-routing
 ```
 
 You may also get specified release of the package by:
 
 ```
-go get gopkg.in/go-ozzo/ozzo-routing.v1
+go get gopkg.in/jackwhelpton/fasthttp-routing.v1
 ```
 
 ## Getting Started
-
-For a complete RESTful application boilerplate based on ozzo-routing, please refer to the [golang-restful-starter-kit](https://github.com/qiangxue/golang-restful-starter-kit). Below we describe how to create a simple REST API using ozzo-routing.
 
 Create a `server.go` file with the following content:
 
@@ -52,13 +46,14 @@ package main
 
 import (
 	"log"
-	"net/http"
-	"github.com/go-ozzo/ozzo-routing"
-	"github.com/go-ozzo/ozzo-routing/access"
-	"github.com/go-ozzo/ozzo-routing/slash"
-	"github.com/go-ozzo/ozzo-routing/content"
-	"github.com/go-ozzo/ozzo-routing/fault"
-	"github.com/go-ozzo/ozzo-routing/file"
+  
+	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/jackwhelpton/fasthttp-routing/access"
+	"github.com/jackwhelpton/fasthttp-routing/slash"
+	"github.com/jackwhelpton/fasthttp-routing/content"
+	"github.com/jackwhelpton/fasthttp-routing/fault"
+	"github.com/jackwhelpton/fasthttp-routing/file"
+	"github.com/valyala/fasthttp"
 )
 
 func main() {
@@ -67,7 +62,7 @@ func main() {
 	router.Use(
 		// all these handlers are shared by every route
 		access.Logger(log.Printf),
-		slash.Remover(http.StatusMovedPermanently),
+		slash.Remover(fasthttp.StatusMovedPermanently),
 		fault.Recovery(log.Printf),
 	)
 
@@ -94,8 +89,7 @@ func main() {
 		"/": "/ui/",
 	}))
 
-	http.Handle("/", router)
-	http.ListenAndServe(":8080", nil)
+	fasthttp.ListenAndServe(":8080", router.HandleRequest)
 }
 ```
 
@@ -112,7 +106,7 @@ You should be able to access URLs such as `http://localhost:8080`, `http://local
 
 ### Routes
 
-ozzo-routing works by building a routing table in a router and then dispatching HTTP requests to the matching handlers 
+fasthttp-routing works by building a routing table in a router and then dispatching HTTP requests to the matching handlers 
 found in the routing table. An intuitive illustration of a routing table is as follows:
 
 
@@ -342,8 +336,8 @@ under the specified directories, while the latter serves the content of a single
 
 ```go
 import (
-	"github.com/go-ozzo/ozzo-routing"
-	"github.com/go-ozzo/ozzo-routing/file"
+	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/jackwhelpton/fasthttp-routing/file"
 )
 
 router := routing.NewRouter()
@@ -358,7 +352,21 @@ router.Get("/*", file.Server(file.PathMap{
 
 ## Handlers
 
-ozzo-routing comes with a few commonly used handlers in its subpackages:
+A handler is a function with the signature `func(*routing.Context) error`. A handler is executed by the router if
+the incoming request URL path matches the route that the handler is associated with. Through the `routing.Context` 
+parameter, you can access the request information in handlers.
+
+A route may be associated with multiple handlers. These handlers will be executed in the order that they are registered
+to the route. The execution sequence can be terminated in the middle using one of the following two methods:
+
+* A handler returns an error: the router will skip the rest of the handlers and handle the returned error.
+* A handler calls `Context.Abort()`: the router will simply skip the rest of the handlers. There is no error to be handled.
+ 
+A handler can call `Context.Next()` to explicitly execute the rest of the unexecuted handlers and take actions after
+they finish execution. For example, a response compression handler may start the output buffer, call `Context.Next()`,
+and then compress and send the output to response.
+
+fasthttp-routing comes with a few commonly used handlers in its subpackages:
 
 Handler name 					| Description
 --------------------------------|--------------------------------------------
@@ -382,82 +390,18 @@ The following code shows how these handlers may be used:
 ```go
 import (
 	"log"
-	"net/http"
-	"github.com/go-ozzo/ozzo-routing"
-	"github.com/go-ozzo/ozzo-routing/access"
-	"github.com/go-ozzo/ozzo-routing/slash"
-	"github.com/go-ozzo/ozzo-routing/fault"
+
+	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/jackwhelpton/fasthttp-routing/access"
+	"github.com/jackwhelpton/fasthttp-routing/fault"
+	"github.com/jackwhelpton/fasthttp-routing/slash"
+	"github.com/valyala/fasthttp"
 )
 
 router := routing.New()
 
 router.Use(
 	access.Logger(log.Printf),
-	slash.Remover(http.StatusMovedPermanently),
+	slash.Remover(fasthttp.StatusMovedPermanently),
 	fault.Recovery(log.Printf),
 )
-
-...
-```
-
-### Third-party Handlers
-
-
-The following third-party handlers are specifically designed for ozzo-routing:
-
-Handler name 					| Description
---------------------------------|--------------------------------------------
-[jwt.JWT](https://github.com/vvv-v13/ozzo-jwt) | supports JWT Authorization
-
-
-ozzo-routing also provides adapters to support using third-party `http.HandlerFunc` or `http.Handler` handlers. 
-For example,
-
-```go
-router := routing.New()
-
-// using http.HandlerFunc
-router.Use(routing.HTTPHandlerFunc(http.NotFound))
-
-// using http.Handler
-router.Use(routing.HTTPHandler(http.NotFoundHandler))
-```
-
-## 3rd-Party Extensions and Code Examples
-
-* [Simple Standard Service Endpoints (SE4)](https://github.com/jdamick/ozzo-se4)
-* [ozzo examples](https://github.com/marshyski/go-ozzo-examples)
-
-## Benchmarks
-
-*Last updated on Jan 6, 2017*
-
-Ozzo-routing is very fast, thanks to the radix tree data structure and the usage of `sync.Pool` (the idea was
-originally from HttpRouter and Gin). The following table (by running [go-http-routing-benchmark](https://github.com/qiangxue/go-http-routing-benchmark))
-shows how ozzo-routing compares with Gin, HttpRouter, and Martini in performance.
-
-```
-BenchmarkOzzo_GithubAll                    50000             37989 ns/op               0 B/op          0 allocs/op
-BenchmarkEcho_GithubAll                    20000             91003 ns/op            6496 B/op        203 allocs/op
-BenchmarkGin_GithubAll                     50000             26717 ns/op               0 B/op          0 allocs/op
-BenchmarkHttpRouter_GithubAll              50000             36052 ns/op           13792 B/op        167 allocs/op
-BenchmarkMartini_GithubAll                   300           4162283 ns/op          228216 B/op       2483 allocs/op
-
-BenchmarkOzzo_GPlusAll                   1000000              1732 ns/op               0 B/op          0 allocs/op
-BenchmarkEcho_GPlusAll                    300000              4523 ns/op             416 B/op         13 allocs/op
-BenchmarkGin_GPlusAll                    1000000              1171 ns/op               0 B/op          0 allocs/op
-BenchmarkHttpRouter_GPlusAll             1000000              1533 ns/op             640 B/op         11 allocs/op
-BenchmarkMartini_GPlusAll                  20000             75634 ns/op           14448 B/op        165 allocs/op
-
-BenchmarkOzzo_ParseAll                    500000              3318 ns/op               0 B/op          0 allocs/op
-BenchmarkEcho_ParseAll                    200000              7336 ns/op             832 B/op         26 allocs/op
-BenchmarkGin_ParseAll                    1000000              2075 ns/op               0 B/op          0 allocs/op
-BenchmarkHttpRouter_ParseAll             1000000              2034 ns/op             640 B/op         16 allocs/op
-BenchmarkMartini_ParseAll                  10000            122002 ns/op           25600 B/op        276 allocs/op
-```
-
-## Credits
-
-ozzo-routing has referenced many popular routing frameworks, including [Express](http://expressjs.com/), 
-[Martini](https://github.com/go-martini/martini), [httprouter](https://github.com/julienschmidt/httprouter), and
-[gin](https://github.com/gin-gonic/gin). 

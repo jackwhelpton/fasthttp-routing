@@ -4,7 +4,9 @@
 
 package routing
 
-import "net/http"
+import (
+	"github.com/valyala/fasthttp"
+)
 
 // HTTPError represents an HTTP error with HTTP status code and error message
 type HTTPError interface {
@@ -20,13 +22,13 @@ type httpError struct {
 }
 
 // NewHTTPError creates a new HttpError instance.
-// If the error message is not given, http.StatusText() will be called
+// If the error message is not given, fasthttp.StatusMessage() will be called
 // to generate the message based on the status code.
 func NewHTTPError(status int, message ...string) HTTPError {
 	if len(message) > 0 {
 		return &httpError{status, message[0]}
 	}
-	return &httpError{status, http.StatusText(status)}
+	return &httpError{status, fasthttp.StatusMessage(status)}
 }
 
 // Error returns the error message.

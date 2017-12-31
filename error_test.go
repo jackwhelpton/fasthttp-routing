@@ -10,15 +10,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
 )
 
 func TestNewHttpError(t *testing.T) {
 	e := NewHTTPError(http.StatusNotFound)
-	assert.Equal(t, http.StatusNotFound, e.StatusCode())
-	assert.Equal(t, http.StatusText(http.StatusNotFound), e.Error())
+	assert.Equal(t, fasthttp.StatusNotFound, e.StatusCode())
+	assert.Equal(t, fasthttp.StatusMessage(http.StatusNotFound), e.Error())
 
 	e = NewHTTPError(http.StatusNotFound, "abc")
-	assert.Equal(t, http.StatusNotFound, e.StatusCode())
+	assert.Equal(t, fasthttp.StatusNotFound, e.StatusCode())
 	assert.Equal(t, "abc", e.Error())
 
 	s, _ := json.Marshal(e)

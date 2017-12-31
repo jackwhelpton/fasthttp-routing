@@ -3,7 +3,6 @@ package routing
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,28 +24,28 @@ func TestRouterNotFound(t *testing.T) {
 	ctx.Request.SetRequestURI("/users")
 	r.HandleRequest(&ctx)
 	assert.Equal(t, "ok", string(ctx.Response.Body()), "response body")
-	assert.Equal(t, http.StatusOK, ctx.Response.Header.StatusCode(), "HTTP status code")
+	assert.Equal(t, fasthttp.StatusOK, ctx.Response.StatusCode(), "HTTP status code")
 
 	ctx = fasthttp.RequestCtx{}
 	ctx.Request.Header.SetMethod("PUT")
 	ctx.Request.SetRequestURI("/users")
 	r.HandleRequest(&ctx)
 	assert.Equal(t, "GET, OPTIONS, POST", string(ctx.Response.Header.Peek("Allow")), "Allow header")
-	assert.Equal(t, http.StatusMethodNotAllowed, ctx.Response.Header.StatusCode(), "HTTP status code")
+	assert.Equal(t, fasthttp.StatusMethodNotAllowed, ctx.Response.StatusCode(), "HTTP status code")
 
 	ctx = fasthttp.RequestCtx{}
 	ctx.Request.Header.SetMethod("OPTIONS")
 	ctx.Request.SetRequestURI("/users")
 	r.HandleRequest(&ctx)
 	assert.Equal(t, "GET, OPTIONS, POST", string(ctx.Response.Header.Peek("Allow")), "Allow header")
-	assert.Equal(t, http.StatusOK, ctx.Response.Header.StatusCode(), "HTTP status code")
+	assert.Equal(t, fasthttp.StatusOK, ctx.Response.StatusCode(), "HTTP status code")
 
 	ctx = fasthttp.RequestCtx{}
 	ctx.Request.Header.SetMethod("GET")
 	ctx.Request.SetRequestURI("/users/")
 	r.HandleRequest(&ctx)
 	assert.Equal(t, "", string(ctx.Response.Header.Peek("Allow")), "Allow header")
-	assert.Equal(t, http.StatusNotFound, ctx.Response.Header.StatusCode(), "HTTP status code")
+	assert.Equal(t, fasthttp.StatusNotFound, ctx.Response.StatusCode(), "HTTP status code")
 
 	r.IgnoreTrailingSlash = true
 	ctx = fasthttp.RequestCtx{}
@@ -54,7 +53,7 @@ func TestRouterNotFound(t *testing.T) {
 	ctx.Request.SetRequestURI("/users/")
 	r.HandleRequest(&ctx)
 	assert.Equal(t, "ok", string(ctx.Response.Body()), "response body")
-	assert.Equal(t, http.StatusOK, ctx.Response.Header.StatusCode(), "HTTP status code")
+	assert.Equal(t, fasthttp.StatusOK, ctx.Response.StatusCode(), "HTTP status code")
 }
 
 func TestRouterUse(t *testing.T) {
@@ -111,11 +110,11 @@ func TestRouterHandleError(t *testing.T) {
 	r := New()
 	c := NewContext(&fasthttp.RequestCtx{})
 	r.handleError(c, errors.New("abc"))
-	assert.Equal(t, http.StatusInternalServerError, c.Response.Header.StatusCode())
+	assert.Equal(t, fasthttp.StatusInternalServerError, c.Response.StatusCode())
 
 	c = NewContext(&fasthttp.RequestCtx{})
-	r.handleError(c, NewHTTPError(http.StatusNotFound))
-	assert.Equal(t, http.StatusNotFound, c.Response.Header.StatusCode())
+	r.handleError(c, NewHTTPError(fasthttp.StatusNotFound))
+	assert.Equal(t, fasthttp.StatusNotFound, c.Response.StatusCode())
 }
 
 func TestRequestHandler(t *testing.T) {
@@ -126,5 +125,5 @@ func TestRequestHandler(t *testing.T) {
 
 	h := RequestHandlerFunc(func(c *fasthttp.RequestCtx) { c.NotFound() })
 	assert.Nil(t, h(c))
-	assert.Equal(t, http.StatusNotFound, c.Response.Header.StatusCode())
+	assert.Equal(t, fasthttp.StatusNotFound, c.Response.StatusCode())
 }
