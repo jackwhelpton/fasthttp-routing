@@ -10,14 +10,20 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+// AcceptRange represents a media-range contained within an Accept header.
 type AcceptRange struct {
-	Type       string
-	Subtype    string
-	Weight     float64
+	// Type represents the media type.
+	Type string
+	// Subtype represents the media subtype.
+	Subtype string
+	// Weight represents the weight (quality factor) of this range.
+	Weight float64
+	// Parameters represents the parameters that are applicable to this range.
 	Parameters map[string]string
-	raw        string // the raw string for this accept
+	raw        string
 }
 
+// RawString returns the raw string for this accept range.
 func (a AcceptRange) RawString() string {
 	return a.raw
 }
@@ -31,10 +37,12 @@ func (a AcceptRange) RawString() string {
 //  accept-params  = weight *( accept-ext )
 //  accept-ext = OWS ";" OWS token [ "=" ( token / quoted-string ) ]
 
+// AcceptMediaTypes returns the set of accepted media ranges.
 func AcceptMediaTypes(ctx *fasthttp.RequestCtx) []AcceptRange {
 	return ParseAcceptRanges(string(ctx.Request.Header.Peek("Accept")))
 }
 
+// ParseAcceptRanges returns the set of accepted media ranges from an Accept header.
 func ParseAcceptRanges(accepts string) []AcceptRange {
 	result := []AcceptRange{}
 	remaining := accepts
@@ -49,6 +57,7 @@ func ParseAcceptRanges(accepts string) []AcceptRange {
 	return result
 }
 
+// ParseAcceptRange returns the media range, params and quality factor (weight) from an Accept range.
 func ParseAcceptRange(accept string) AcceptRange {
 	typeAndSub, rawparams := extractFieldAndSkipToken(accept, ';')
 
@@ -116,6 +125,7 @@ func compareParams(params1 map[string]string, params2 map[string]string) (count 
 	return count
 }
 
+// NegotiateContentType returns the best possible response type from a set of options, based on the Accept header.
 func NegotiateContentType(ctx *fasthttp.RequestCtx, offers []string, defaultOffer string) string {
 	accepts := AcceptMediaTypes(ctx)
 	offerRanges := []AcceptRange{}
