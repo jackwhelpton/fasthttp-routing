@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/erikdubbelboer/fasthttp"
 	"github.com/jackwhelpton/fasthttp-routing"
 	"github.com/stretchr/testify/assert"
-	"github.com/valyala/fasthttp"
 )
 
 func TestBuildAllowMap(t *testing.T) {

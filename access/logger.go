@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/erikdubbelboer/fasthttp"
 	"github.com/jackwhelpton/fasthttp-routing"
-	"github.com/valyala/fasthttp"
 )
 
 // LogFunc logs a message using the given format and optional arguments.
@@ -50,7 +50,7 @@ func CustomLogger(loggerFunc LogWriterFunc) routing.Handler {
 
 		err := c.Next()
 
-		elapsed := float64(time.Now().Sub(startTime).Nanoseconds()) / 1e6
+		elapsed := float64(time.Since(startTime).Nanoseconds()) / 1e6
 		loggerFunc(c.RequestCtx, elapsed)
 
 		return err

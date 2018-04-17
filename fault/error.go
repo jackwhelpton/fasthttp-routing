@@ -6,8 +6,8 @@
 package fault
 
 import (
+	"github.com/erikdubbelboer/fasthttp"
 	"github.com/jackwhelpton/fasthttp-routing"
-	"github.com/valyala/fasthttp"
 )
 
 // ErrorHandler returns a handler that handles errors returned by the handlers following this one.

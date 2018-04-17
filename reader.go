@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/valyala/fasthttp"
+	"github.com/erikdubbelboer/fasthttp"
 )
 
 // MIME types used when doing request data reading and response data writing.

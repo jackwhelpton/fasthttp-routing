@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/erikdubbelboer/fasthttp"
 	"github.com/jackwhelpton/fasthttp-routing"
-	"github.com/valyala/fasthttp"
 )
 
 const (

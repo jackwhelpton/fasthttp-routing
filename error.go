@@ -5,7 +5,7 @@
 package routing
 
 import (
-	"github.com/valyala/fasthttp"
+	"github.com/erikdubbelboer/fasthttp"
 )
 
 // HTTPError represents an HTTP error with HTTP status code and error message

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/valyala/fasthttp"
+	"github.com/erikdubbelboer/fasthttp"
 )
 
 // DataWriter is used by Context.Write() to write arbitrary data into an HTTP response.

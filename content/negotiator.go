@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/valyala/fasthttp"
+	"github.com/erikdubbelboer/fasthttp"
 )
 
 // AcceptRange represents a media-range contained within an Accept header.

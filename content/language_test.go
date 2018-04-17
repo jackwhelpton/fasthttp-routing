@@ -7,9 +7,9 @@ package content
 import (
 	"testing"
 
+	"github.com/erikdubbelboer/fasthttp"
 	"github.com/jackwhelpton/fasthttp-routing"
 	"github.com/stretchr/testify/assert"
-	"github.com/valyala/fasthttp"
 )
 
 func TestLanguageNegotiator(t *testing.T) {

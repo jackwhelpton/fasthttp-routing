@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/erikdubbelboer/fasthttp"
 	"github.com/jackwhelpton/fasthttp-routing"
 	"github.com/stretchr/testify/assert"
-	"github.com/valyala/fasthttp"
 )
 
 func TestParseBasicAuth(t *testing.T) {

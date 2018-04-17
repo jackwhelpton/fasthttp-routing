@@ -8,7 +8,7 @@
 ## Description
 
 fasthttp-routing is a Go package that is adapted from [ozzo-routing](https://github.com/go-ozzo/ozzo-routing) to provide
-fast and powerful routing features for the high-performance [fasthttp](https://github.com/valyala/fasthttp) server.
+fast and powerful routing features for the high-performance [fasthttp](https://github.com/erikdubbelboer/fasthttp) server.
 The package has the following features:
 
 * middleware pipeline architecture, similar to that of the [Express framework](http://expressjs.com).
@@ -52,7 +52,7 @@ import (
 	"github.com/jackwhelpton/fasthttp-routing/content"
 	"github.com/jackwhelpton/fasthttp-routing/fault"
 	"github.com/jackwhelpton/fasthttp-routing/file"
-	"github.com/valyala/fasthttp"
+	"github.com/erikdubbelboer/fasthttp"
 )
 
 func main() {
@@ -394,7 +394,7 @@ import (
 	"github.com/jackwhelpton/fasthttp-routing/access"
 	"github.com/jackwhelpton/fasthttp-routing/fault"
 	"github.com/jackwhelpton/fasthttp-routing/slash"
-	"github.com/valyala/fasthttp"
+	"github.com/erikdubbelboer/fasthttp"
 )
 
 router := routing.New()

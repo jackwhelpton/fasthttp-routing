@@ -11,8 +11,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/erikdubbelboer/fasthttp"
 	"github.com/jackwhelpton/fasthttp-routing"
-	"github.com/valyala/fasthttp"
 )
 
 // ServerOptions defines the possible options for the Server handler.

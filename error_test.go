@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/erikdubbelboer/fasthttp"
 	"github.com/stretchr/testify/assert"
-	"github.com/valyala/fasthttp"
 )
 
 func TestNewHttpError(t *testing.T) {

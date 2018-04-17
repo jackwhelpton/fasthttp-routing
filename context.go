@@ -5,7 +5,7 @@
 package routing
 
 import (
-	"github.com/valyala/fasthttp"
+	"github.com/erikdubbelboer/fasthttp"
 )
 
 // Context represents the contextual data and environment while processing an incoming HTTP request.

@@ -8,8 +8,8 @@ package slash
 import (
 	"strings"
 
+	"github.com/erikdubbelboer/fasthttp"
 	"github.com/jackwhelpton/fasthttp-routing"
-	"github.com/valyala/fasthttp"
 )
 
 // Remover returns a handler that removes the trailing slash (if any) from the requested URL.
@@ -22,7 +22,7 @@ import (
 //     import (
 //         "github.com/jackwhelpton/fasthttp-routing"
 //         "github.com/jackwhelpton/fasthttp-routing/slash"
-//         "github.com/valyala/fasthttp"
+//         "github.com/erikdubbelboer/fasthttp"
 //     )
 //
 //     r := routing.New()

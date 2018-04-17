@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/erikdubbelboer/fasthttp"
 	"github.com/jackwhelpton/fasthttp-routing"
-	"github.com/valyala/fasthttp"
 )
 
 // User is the key used to store and retrieve the user identity information in routing.Context
@@ -292,7 +292,7 @@ func JWT(verificationKey string, options ...JWTOptions) routing.Handler {
 
 // NewJWT creates a new JWT token and returns it as a signed string that may be sent to the client side.
 // The signingMethod parameter is optional. It defaults to the HS256 algorithm.
-func NewJWT(claims jwt.MapClaims, signingKey string, signingMethod ...jwt.SigningMethod) (string, error) {
+func NewJWT(claims jwt.Claims, signingKey string, signingMethod ...jwt.SigningMethod) (string, error) {
 	var sm jwt.SigningMethod = jwt.SigningMethodHS256
 	if len(signingMethod) > 0 {
 		sm = signingMethod[0]

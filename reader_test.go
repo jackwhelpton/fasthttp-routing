@@ -3,8 +3,8 @@ package routing
 import (
 	"testing"
 
+	"github.com/erikdubbelboer/fasthttp"
 	"github.com/stretchr/testify/assert"
-	"github.com/valyala/fasthttp"
 )
 
 type FA struct {
