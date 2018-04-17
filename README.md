@@ -390,11 +390,11 @@ The following code shows how these handlers may be used:
 import (
 	"log"
 
+	"github.com/erikdubbelboer/fasthttp"
 	"github.com/jackwhelpton/fasthttp-routing"
 	"github.com/jackwhelpton/fasthttp-routing/access"
 	"github.com/jackwhelpton/fasthttp-routing/fault"
 	"github.com/jackwhelpton/fasthttp-routing/slash"
-	"github.com/erikdubbelboer/fasthttp"
 )
 
 router := routing.New()
