@@ -46,13 +46,13 @@ package main
 import (
 	"log"
   
+  	"github.com/erikdubbelboer/fasthttp"
 	"github.com/jackwhelpton/fasthttp-routing"
 	"github.com/jackwhelpton/fasthttp-routing/access"
 	"github.com/jackwhelpton/fasthttp-routing/slash"
 	"github.com/jackwhelpton/fasthttp-routing/content"
 	"github.com/jackwhelpton/fasthttp-routing/fault"
 	"github.com/jackwhelpton/fasthttp-routing/file"
-	"github.com/erikdubbelboer/fasthttp"
 )
 
 func main() {
