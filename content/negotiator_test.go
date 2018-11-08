@@ -6,8 +6,8 @@ package content
 import (
 	"testing"
 
-	"github.com/erikdubbelboer/fasthttp"
 	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
 )
 
 func TestContentNegotiation(t *testing.T) {

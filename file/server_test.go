@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/erikdubbelboer/fasthttp"
-	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/jackwhelpton/fasthttp-routing/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
 )
 
 type (

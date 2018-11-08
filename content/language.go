@@ -7,8 +7,8 @@ package content
 import (
 	"golang.org/x/text/language"
 
-	"github.com/erikdubbelboer/fasthttp"
-	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/jackwhelpton/fasthttp-routing/v2"
+	"github.com/valyala/fasthttp"
 )
 
 // Language is the key used to store and retrieve the chosen language in routing.Context

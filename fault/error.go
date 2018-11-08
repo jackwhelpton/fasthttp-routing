@@ -6,8 +6,8 @@
 package fault
 
 import (
-	"github.com/erikdubbelboer/fasthttp"
-	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/jackwhelpton/fasthttp-routing/v2"
+	"github.com/valyala/fasthttp"
 )
 
 // ErrorHandler returns a handler that handles errors returned by the handlers following this one.
@@ -22,8 +22,8 @@ import (
 //
 //     import (
 //         "log"
-//         "github.com/jackwhelpton/fasthttp-routing"
-//         "github.com/jackwhelpton/fasthttp-routing/fault"
+//         "github.com/jackwhelpton/fasthttp-routing/v2"
+//         "github.com/jackwhelpton/fasthttp-routing/v2/fault"
 //     )
 //
 //     r := routing.New()

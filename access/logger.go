@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/erikdubbelboer/fasthttp"
-	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/jackwhelpton/fasthttp-routing/v2"
+	"github.com/valyala/fasthttp"
 )
 
 // LogFunc logs a message using the given format and optional arguments.
@@ -35,8 +35,8 @@ type LogWriterFunc func(ctx *fasthttp.RequestCtx, elapsed float64)
 //         "log"
 //         "net/http"
 //
-//         "github.com/jackwhelpton/fasthttp-routing"
-//         "github.com/jackwhelpton/fasthttp-routing/access"
+//         "github.com/jackwhelpton/fasthttp-routing/v2"
+//         "github.com/jackwhelpton/fasthttp-routing/v2/access"
 //     )
 //
 //     func myCustomLogger(req http.Context, res access.LogResponseWriter, elapsed int64) {
@@ -63,8 +63,8 @@ func CustomLogger(loggerFunc LogWriterFunc) routing.Handler {
 //
 //     import (
 //         "log"
-//         "github.com/jackwhelpton/fasthttp-routing"
-//         "github.com/jackwhelpton/fasthttp-routing/access"
+//         "github.com/jackwhelpton/fasthttp-routing/v2"
+//         "github.com/jackwhelpton/fasthttp-routing/v2/access"
 //     )
 //
 //     r := routing.New()

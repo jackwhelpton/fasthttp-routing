@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/erikdubbelboer/fasthttp"
 	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
 )
 
 func TestContextParam(t *testing.T) {

@@ -11,8 +11,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/erikdubbelboer/fasthttp"
-	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/jackwhelpton/fasthttp-routing/v2"
+	"github.com/valyala/fasthttp"
 )
 
 // ServerOptions defines the possible options for the Server handler.
@@ -57,8 +57,8 @@ func init() {
 //
 //     import (
 //         "log"
-//         "github.com/jackwhelpton/fasthttp-routing"
-//         "github.com/jackwhelpton/fasthttp-routing/file"
+//         "github.com/jackwhelpton/fasthttp-routing/v2"
+//         "github.com/jackwhelpton/fasthttp-routing/v2/file"
 //     )
 //
 //     r := routing.New()

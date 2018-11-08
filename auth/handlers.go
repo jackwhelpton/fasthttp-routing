@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/erikdubbelboer/fasthttp"
-	"github.com/jackwhelpton/fasthttp-routing"
+	"github.com/jackwhelpton/fasthttp-routing/v2"
+	"github.com/valyala/fasthttp"
 )
 
 // User is the key used to store and retrieve the user identity information in routing.Context
@@ -34,8 +34,8 @@ type BasicAuthFunc func(c *routing.Context, username, password string) (Identity
 //   import (
 //     "errors"
 //     "fmt"
-//     "github.com/jackwhelpton/fasthttp-routing"
-//     "github.com/jackwhelpton/fasthttp-routing/auth"
+//     "github.com/jackwhelpton/fasthttp-routing/v2"
+//     "github.com/jackwhelpton/fasthttp-routing/v2/auth"
 //   )
 //   func main() {
 //     r := routing.New()
@@ -93,8 +93,8 @@ type TokenAuthFunc func(c *routing.Context, token string) (Identity, error)
 //   import (
 //     "errors"
 //     "fmt"
-//     "github.com/jackwhelpton/fasthttp-routing"
-//     "github.com/jackwhelpton/fasthttp-routing/auth"
+//     "github.com/jackwhelpton/fasthttp-routing/v2"
+//     "github.com/jackwhelpton/fasthttp-routing/v2/auth"
 //   )
 //   func main() {
 //     r := routing.New()
@@ -150,8 +150,8 @@ var TokenName = "access-token"
 //     "errors"
 //     "fmt"
 //     "net/http"
-//     "github.com/jackwhelpton/fasthttp-routing/ozzo-routing"
-//     "github.com/jackwhelpton/fasthttp-routing/auth"
+//     "github.com/jackwhelpton/fasthttp-routing/v2"
+//     "github.com/jackwhelpton/fasthttp-routing/v2/auth"
 //   )
 //   func main() {
 //     r := routing.New()
@@ -221,8 +221,8 @@ func DefaultJWTTokenHandler(c *routing.Context, token *jwt.Token) error {
 //     "errors"
 //     "fmt"
 //     "github.com/dgrijalva/jwt-go"
-//     "github.com/jackwhelpton/fasthttp-routing"
-//     "github.com/jackwhelpton/fasthttp-routing/auth"
+//     "github.com/jackwhelpton/fasthttp-routing/v2"
+//     "github.com/jackwhelpton/fasthttp-routing/v2/auth"
 //   )
 //   func main() {
 //     signingKey := "secret-key"

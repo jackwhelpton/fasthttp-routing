@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/erikdubbelboer/fasthttp"
+	"github.com/valyala/fasthttp"
 )
 
 var (
