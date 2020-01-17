@@ -1,9 +1,9 @@
 # fasthttp-routing
 
-[![GoDoc](https://godoc.org/github.com/jackwhelpton/fasthttp-routing?status.png)](http://godoc.org/github.com/jackwhelpton/fasthttp-routing)
-[![Build Status](https://travis-ci.org/jackwhelpton/fasthttp-routing.svg?branch=master)](https://travis-ci.org/jackwhelpton/fasthttp-routing)
-[![Coverage Status](https://coveralls.io/repos/github/jackwhelpton/fasthttp-routing/badge.svg?branch=master)](https://coveralls.io/github/jackwhelpton/fasthttp-routing?branch=master)
-[![Go Report](https://goreportcard.com/badge/github.com/jackwhelpton/fasthttp-routing)](https://goreportcard.com/report/github.com/jackwhelpton/fasthttp-routing)
+[![GoDoc](https://godoc.org/github.com/rmnoff/fasthttp-routing?status.png)](http://godoc.org/github.com/rmnoff/fasthttp-routing)
+[![Build Status](https://travis-ci.org/rmnoff/fasthttp-routing.svg?branch=master)](https://travis-ci.org/rmnoff/fasthttp-routing)
+[![Coverage Status](https://coveralls.io/repos/github/rmnoff/fasthttp-routing/badge.svg?branch=master)](https://coveralls.io/github/rmnoff/fasthttp-routing?branch=master)
+[![Go Report](https://goreportcard.com/badge/github.com/rmnoff/fasthttp-routing)](https://goreportcard.com/report/github.com/rmnoff/fasthttp-routing)
 
 ## Description
 
@@ -27,13 +27,13 @@ Go 1.7 or above.
 Run the following command to install the package:
 
 ```
-go get github.com/jackwhelpton/fasthttp-routing
+go get github.com/rmnoff/fasthttp-routing
 ```
 
 You may also get specified release of the package by:
 
 ```
-go get gopkg.in/jackwhelpton/fasthttp-routing.v1
+go get gopkg.in/rmnoff/fasthttp-routing.v1
 ```
 
 ## Getting Started
@@ -46,12 +46,12 @@ package main
 import (
 	"log"
   
-	"github.com/jackwhelpton/fasthttp-routing"
-	"github.com/jackwhelpton/fasthttp-routing/access"
-	"github.com/jackwhelpton/fasthttp-routing/slash"
-	"github.com/jackwhelpton/fasthttp-routing/content"
-	"github.com/jackwhelpton/fasthttp-routing/fault"
-	"github.com/jackwhelpton/fasthttp-routing/file"
+	"github.com/rmnoff/fasthttp-routing"
+	"github.com/rmnoff/fasthttp-routing/access"
+	"github.com/rmnoff/fasthttp-routing/slash"
+	"github.com/rmnoff/fasthttp-routing/content"
+	"github.com/rmnoff/fasthttp-routing/fault"
+	"github.com/rmnoff/fasthttp-routing/file"
 	"github.com/valyala/fasthttp"
 )
 
@@ -335,8 +335,8 @@ under the specified directories, while the latter serves the content of a single
 
 ```go
 import (
-	"github.com/jackwhelpton/fasthttp-routing"
-	"github.com/jackwhelpton/fasthttp-routing/file"
+	"github.com/rmnoff/fasthttp-routing"
+	"github.com/rmnoff/fasthttp-routing/file"
 )
 
 router := routing.NewRouter()
@@ -369,20 +369,20 @@ fasthttp-routing comes with a few commonly used handlers in its subpackages:
 
 Handler name 					| Description
 --------------------------------|--------------------------------------------
-[access.Logger](https://godoc.org/github.com/jackwhelpton/fasthttp-routing/access) | records an entry for every incoming request
-[auth.Basic](https://godoc.org/github.com/jackwhelpton/fasthttp-routing/auth) | provides authentication via HTTP Basic
-[auth.Bearer](https://godoc.org/github.com/jackwhelpton/fasthttp-routing/auth) | provides authentication via HTTP Bearer
-[auth.Query](https://godoc.org/github.com/jackwhelpton/fasthttp-routing/auth) | provides authentication via token-based query parameter
-[auth.JWT](https://godoc.org/github.com/jackwhelpton/fasthttp-routing/auth) | provides JWT-based authentication
-[content.TypeNegotiator](https://godoc.org/github.com/jackwhelpton/fasthttp-routing/content) | supports content negotiation by response types
-[content.LanguageNegotiator](https://godoc.org/github.com/jackwhelpton/fasthttp-routing/content) | supports content negotiation by accepted languages
-[cors.Handler](https://godoc.org/github.com/jackwhelpton/fasthttp-routing/cors) | implements the CORS (Cross Origin Resource Sharing) specification from the W3C
-[fault.Recovery](https://godoc.org/github.com/jackwhelpton/fasthttp-routing/fault) | recovers from panics and handles errors returned by handlers
-[fault.PanicHandler](https://godoc.org/github.com/jackwhelpton/fasthttp-routing/fault) | recovers from panics happened in the handlers
-[fault.ErrorHandler](https://godoc.org/github.com/jackwhelpton/fasthttp-routing/fault) | handles errors returned by handlers by writing them in an appropriate format to the response
-[file.Server](https://godoc.org/github.com/jackwhelpton/fasthttp-routing/file) | serves the files under the specified folder as response content
-[file.Content](https://godoc.org/github.com/jackwhelpton/fasthttp-routing/file) | serves the content of the specified file as the response
-[slash.Remover](https://godoc.org/github.com/jackwhelpton/fasthttp-routing/slash) | removes the trailing slashes from the request URL and redirects to the proper URL
+[access.Logger](https://godoc.org/github.com/rmnoff/fasthttp-routing/access) | records an entry for every incoming request
+[auth.Basic](https://godoc.org/github.com/rmnoff/fasthttp-routing/auth) | provides authentication via HTTP Basic
+[auth.Bearer](https://godoc.org/github.com/rmnoff/fasthttp-routing/auth) | provides authentication via HTTP Bearer
+[auth.Query](https://godoc.org/github.com/rmnoff/fasthttp-routing/auth) | provides authentication via token-based query parameter
+[auth.JWT](https://godoc.org/github.com/rmnoff/fasthttp-routing/auth) | provides JWT-based authentication
+[content.TypeNegotiator](https://godoc.org/github.com/rmnoff/fasthttp-routing/content) | supports content negotiation by response types
+[content.LanguageNegotiator](https://godoc.org/github.com/rmnoff/fasthttp-routing/content) | supports content negotiation by accepted languages
+[cors.Handler](https://godoc.org/github.com/rmnoff/fasthttp-routing/cors) | implements the CORS (Cross Origin Resource Sharing) specification from the W3C
+[fault.Recovery](https://godoc.org/github.com/rmnoff/fasthttp-routing/fault) | recovers from panics and handles errors returned by handlers
+[fault.PanicHandler](https://godoc.org/github.com/rmnoff/fasthttp-routing/fault) | recovers from panics happened in the handlers
+[fault.ErrorHandler](https://godoc.org/github.com/rmnoff/fasthttp-routing/fault) | handles errors returned by handlers by writing them in an appropriate format to the response
+[file.Server](https://godoc.org/github.com/rmnoff/fasthttp-routing/file) | serves the files under the specified folder as response content
+[file.Content](https://godoc.org/github.com/rmnoff/fasthttp-routing/file) | serves the content of the specified file as the response
+[slash.Remover](https://godoc.org/github.com/rmnoff/fasthttp-routing/slash) | removes the trailing slashes from the request URL and redirects to the proper URL
 
 The following code shows how these handlers may be used:
 
@@ -390,10 +390,10 @@ The following code shows how these handlers may be used:
 import (
 	"log"
 
-	"github.com/jackwhelpton/fasthttp-routing"
-	"github.com/jackwhelpton/fasthttp-routing/access"
-	"github.com/jackwhelpton/fasthttp-routing/fault"
-	"github.com/jackwhelpton/fasthttp-routing/slash"
+	"github.com/rmnoff/fasthttp-routing"
+	"github.com/rmnoff/fasthttp-routing/access"
+	"github.com/rmnoff/fasthttp-routing/fault"
+	"github.com/rmnoff/fasthttp-routing/slash"
 	"github.com/valyala/fasthttp"
 )
 

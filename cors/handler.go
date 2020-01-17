@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackwhelpton/fasthttp-routing/v2"
+	"github.com/rmnoff/fasthttp-routing/v2"
 	"github.com/valyala/fasthttp"
 )
 

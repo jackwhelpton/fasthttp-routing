@@ -3,12 +3,12 @@ package routing_test
 import (
 	"log"
 
-	"github.com/jackwhelpton/fasthttp-routing/v2"
-	"github.com/jackwhelpton/fasthttp-routing/v2/access"
-	"github.com/jackwhelpton/fasthttp-routing/v2/content"
-	"github.com/jackwhelpton/fasthttp-routing/v2/fault"
-	"github.com/jackwhelpton/fasthttp-routing/v2/file"
-	"github.com/jackwhelpton/fasthttp-routing/v2/slash"
+	"github.com/rmnoff/fasthttp-routing/v2"
+	"github.com/rmnoff/fasthttp-routing/v2/access"
+	"github.com/rmnoff/fasthttp-routing/v2/content"
+	"github.com/rmnoff/fasthttp-routing/v2/fault"
+	"github.com/rmnoff/fasthttp-routing/v2/file"
+	"github.com/rmnoff/fasthttp-routing/v2/slash"
 	"github.com/valyala/fasthttp"
 )
 

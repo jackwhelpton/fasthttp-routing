@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/jackwhelpton/fasthttp-routing/v2"
+	"github.com/rmnoff/fasthttp-routing/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
 )

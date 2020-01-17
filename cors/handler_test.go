@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jackwhelpton/fasthttp-routing/v2"
+	"github.com/rmnoff/fasthttp-routing/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
 )
