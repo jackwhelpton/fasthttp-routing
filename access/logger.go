@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rmnoff/fasthttp-routing/v2"
+	"github.com/rmnoff/fasthttp-routing/v3"
 	"github.com/valyala/fasthttp"
 )
 
@@ -35,8 +35,8 @@ type LogWriterFunc func(ctx *fasthttp.RequestCtx, elapsed float64)
 //         "log"
 //         "net/http"
 //
-//         "github.com/rmnoff/fasthttp-routing/v2"
-//         "github.com/rmnoff/fasthttp-routing/v2/access"
+//         "github.com/rmnoff/fasthttp-routing/v3"
+//         "github.com/rmnoff/fasthttp-routing/v3/access"
 //     )
 //
 //     func myCustomLogger(req http.Context, res access.LogResponseWriter, elapsed int64) {
@@ -63,8 +63,8 @@ func CustomLogger(loggerFunc LogWriterFunc) routing.Handler {
 //
 //     import (
 //         "log"
-//         "github.com/rmnoff/fasthttp-routing/v2"
-//         "github.com/rmnoff/fasthttp-routing/v2/access"
+//         "github.com/rmnoff/fasthttp-routing/v3"
+//         "github.com/rmnoff/fasthttp-routing/v3/access"
 //     )
 //
 //     r := routing.New()

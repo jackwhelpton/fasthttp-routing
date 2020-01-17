@@ -6,7 +6,7 @@
 package fault
 
 import (
-	"github.com/rmnoff/fasthttp-routing/v2"
+	"github.com/rmnoff/fasthttp-routing/v3"
 	"github.com/valyala/fasthttp"
 )
 
@@ -22,8 +22,8 @@ import (
 //
 //     import (
 //         "log"
-//         "github.com/rmnoff/fasthttp-routing/v2"
-//         "github.com/rmnoff/fasthttp-routing/v2/fault"
+//         "github.com/rmnoff/fasthttp-routing/v3"
+//         "github.com/rmnoff/fasthttp-routing/v3/fault"
 //     )
 //
 //     r := routing.New()

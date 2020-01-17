@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/rmnoff/fasthttp-routing/v2"
+	"github.com/rmnoff/fasthttp-routing/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
 )

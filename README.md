@@ -2,7 +2,7 @@
 
 [![GoDoc](https://godoc.org/github.com/rmnoff/fasthttp-routing?status.png)](http://godoc.org/github.com/rmnoff/fasthttp-routing)
 [![Build Status](https://travis-ci.org/rmnoff/fasthttp-routing.svg?branch=master)](https://travis-ci.org/rmnoff/fasthttp-routing)
-[![Coverage Status](https://coveralls.io/repos/github/rmnoff/fasthttp-routing/badge.svg?branch=master)](https://coveralls.io/github/rmnoff/fasthttp-routing?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/rmnoff/fasthttp-routing/v3badge.svg?branch=master)](https://coveralls.io/github/rmnoff/fasthttp-routing?branch=master)
 [![Go Report](https://goreportcard.com/badge/github.com/rmnoff/fasthttp-routing)](https://goreportcard.com/report/github.com/rmnoff/fasthttp-routing)
 
 ## Description
@@ -45,13 +45,13 @@ package main
 
 import (
 	"log"
-  
-	"github.com/rmnoff/fasthttp-routing"
-	"github.com/rmnoff/fasthttp-routing/access"
-	"github.com/rmnoff/fasthttp-routing/slash"
-	"github.com/rmnoff/fasthttp-routing/content"
-	"github.com/rmnoff/fasthttp-routing/fault"
-	"github.com/rmnoff/fasthttp-routing/file"
+
+	"github.com/rmnoff/fasthttp-routing/v3"
+	"github.com/rmnoff/fasthttp-routing/v3/access"
+	"github.com/rmnoff/fasthttp-routing/v3/slash"
+	"github.com/rmnoff/fasthttp-routing/v3/content"
+	"github.com/rmnoff/fasthttp-routing/v3/fault"
+	"github.com/rmnoff/fasthttp-routing/v3/file"
 	"github.com/valyala/fasthttp"
 )
 
@@ -105,7 +105,7 @@ You should be able to access URLs such as `http://localhost:8080`, `http://local
 
 ### Routes
 
-fasthttp-routing works by building a routing table in a router and then dispatching HTTP requests to the matching handlers 
+fasthttp-routing works by building a routing table in a router and then dispatching HTTP requests to the matching handlers
 found in the routing table. An intuitive illustration of a routing table is as follows:
 
 
@@ -119,7 +119,7 @@ Routes              |  Handlers
 
 For an incoming request `GET /users`, the first route would match and the handlers m1, m2, and h1 would be executed.
 If the request is `PUT /users/123`, the third route would match and the corresponding handlers would be executed.
-Note that the token `<id>` can match any number of non-slash characters and the matching part can be accessed as 
+Note that the token `<id>` can match any number of non-slash characters and the matching part can be accessed as
 a path parameter value in the handlers.
 
 **If an incoming request matches multiple routes in the table, the route added first to the table will take precedence.
@@ -129,7 +129,7 @@ The actual implementation of the routing table uses a variant of the radix tree 
 process as fast as working with a hash table, thanks to the inspiration from [httprouter](https://github.com/julienschmidt/httprouter).
 
 To add a new route and its handlers to the routing table, call the `To` method like the following:
-  
+
 ```go
 router := routing.New()
 router.To("GET", "/users", m1, m2, h1)
@@ -137,13 +137,13 @@ router.To("POST", "/users", m1, m2, h2)
 ```
 
 You can also use shortcut methods, such as `Get`, `Post`, `Put`, etc., which are named after the HTTP method names:
- 
+
 ```go
 router.Get("/users", m1, m2, h1)
 router.Post("/users", m1, m2, h2)
 ```
 
-If you have multiple routes with the same URL path but different HTTP methods, like the above example, you can 
+If you have multiple routes with the same URL path but different HTTP methods, like the above example, you can
 chain them together as follows,
 
 ```go
@@ -206,7 +206,7 @@ As you can see, all these routes have the same route prefix `/api` and the handl
 routing frameworks, the handlers registered with a route group are also called *middlewares*.
 
 Route groups can be nested. That is, a route group can create a child group by calling the `Group()` method. The router
-serves as the top level route group. A child group inherits the handlers registered with its parent group. For example, 
+serves as the top level route group. A child group inherits the handlers registered with its parent group. For example,
 
 ```go
 router := routing.New()
@@ -220,7 +220,7 @@ users.Use(m3)
 users.Put("/<id>", h1)
 ```
 
-Because the router serves as the parent of the `api` group which is the parent of the `users` group, 
+Because the router serves as the parent of the `api` group which is the parent of the `users` group,
 the `PUT /api/users/<id>` route is associated with the handlers `m1`, `m2`, `m3`, and `h1`.
 
 
@@ -242,7 +242,7 @@ http.ListenAndServe(":8080", nil)
 ### Handlers
 
 A handler is a function with the signature `func(*routing.Context) error`. A handler is executed by the router if
-the incoming request URL path matches the route that the handler is associated with. Through the `routing.Context` 
+the incoming request URL path matches the route that the handler is associated with. Through the `routing.Context`
 parameter, you can access the request information in handlers.
 
 A route may be associated with multiple handlers. These handlers will be executed in the order that they are registered
@@ -250,7 +250,7 @@ to the route. The execution sequence can be terminated in the middle using one o
 
 * A handler returns an error: the router will skip the rest of the handlers and handle the returned error.
 * A handler calls `Context.Abort()`: the router will simply skip the rest of the handlers. There is no error to be handled.
- 
+
 A handler can call `Context.Next()` to explicitly execute the rest of the unexecuted handlers and take actions after
 they finish execution. For example, a response compression handler may start the output buffer, call `Context.Next()`,
 and then compress and send the output to response.
@@ -315,7 +315,7 @@ writer with an appropriate one.
 ### Error Handling
 
 A handler may return an error indicating some erroneous condition. Sometimes, a handler or the code it calls may cause
-a panic. Both should be handled properly to ensure best user experience. It is recommended that you use 
+a panic. Both should be handled properly to ensure best user experience. It is recommended that you use
 the `fault.Recover` handler or a similar error handler to handle these errors.
 
 If an error is not handled by any handler, the router will handle it by calling its `handleError()` method which
@@ -335,8 +335,8 @@ under the specified directories, while the latter serves the content of a single
 
 ```go
 import (
-	"github.com/rmnoff/fasthttp-routing"
-	"github.com/rmnoff/fasthttp-routing/file"
+	"github.com/rmnoff/fasthttp-routing/v3"
+	"github.com/rmnoff/fasthttp-routing/v3/file"
 )
 
 router := routing.NewRouter()
@@ -352,7 +352,7 @@ router.Get("/*", file.Server(file.PathMap{
 ## Handlers
 
 A handler is a function with the signature `func(*routing.Context) error`. A handler is executed by the router if
-the incoming request URL path matches the route that the handler is associated with. Through the `routing.Context` 
+the incoming request URL path matches the route that the handler is associated with. Through the `routing.Context`
 parameter, you can access the request information in handlers.
 
 A route may be associated with multiple handlers. These handlers will be executed in the order that they are registered
@@ -360,7 +360,7 @@ to the route. The execution sequence can be terminated in the middle using one o
 
 * A handler returns an error: the router will skip the rest of the handlers and handle the returned error.
 * A handler calls `Context.Abort()`: the router will simply skip the rest of the handlers. There is no error to be handled.
- 
+
 A handler can call `Context.Next()` to explicitly execute the rest of the unexecuted handlers and take actions after
 they finish execution. For example, a response compression handler may start the output buffer, call `Context.Next()`,
 and then compress and send the output to response.
@@ -369,20 +369,20 @@ fasthttp-routing comes with a few commonly used handlers in its subpackages:
 
 Handler name 					| Description
 --------------------------------|--------------------------------------------
-[access.Logger](https://godoc.org/github.com/rmnoff/fasthttp-routing/access) | records an entry for every incoming request
-[auth.Basic](https://godoc.org/github.com/rmnoff/fasthttp-routing/auth) | provides authentication via HTTP Basic
-[auth.Bearer](https://godoc.org/github.com/rmnoff/fasthttp-routing/auth) | provides authentication via HTTP Bearer
-[auth.Query](https://godoc.org/github.com/rmnoff/fasthttp-routing/auth) | provides authentication via token-based query parameter
-[auth.JWT](https://godoc.org/github.com/rmnoff/fasthttp-routing/auth) | provides JWT-based authentication
-[content.TypeNegotiator](https://godoc.org/github.com/rmnoff/fasthttp-routing/content) | supports content negotiation by response types
-[content.LanguageNegotiator](https://godoc.org/github.com/rmnoff/fasthttp-routing/content) | supports content negotiation by accepted languages
-[cors.Handler](https://godoc.org/github.com/rmnoff/fasthttp-routing/cors) | implements the CORS (Cross Origin Resource Sharing) specification from the W3C
-[fault.Recovery](https://godoc.org/github.com/rmnoff/fasthttp-routing/fault) | recovers from panics and handles errors returned by handlers
-[fault.PanicHandler](https://godoc.org/github.com/rmnoff/fasthttp-routing/fault) | recovers from panics happened in the handlers
-[fault.ErrorHandler](https://godoc.org/github.com/rmnoff/fasthttp-routing/fault) | handles errors returned by handlers by writing them in an appropriate format to the response
-[file.Server](https://godoc.org/github.com/rmnoff/fasthttp-routing/file) | serves the files under the specified folder as response content
-[file.Content](https://godoc.org/github.com/rmnoff/fasthttp-routing/file) | serves the content of the specified file as the response
-[slash.Remover](https://godoc.org/github.com/rmnoff/fasthttp-routing/slash) | removes the trailing slashes from the request URL and redirects to the proper URL
+[access.Logger](https://godoc.org/github.com/rmnoff/fasthttp-routing/v3/access) | records an entry for every incoming request
+[auth.Basic](https://godoc.org/github.com/rmnoff/fasthttp-routing/v3/auth) | provides authentication via HTTP Basic
+[auth.Bearer](https://godoc.org/github.com/rmnoff/fasthttp-routing/v3/auth) | provides authentication via HTTP Bearer
+[auth.Query](https://godoc.org/github.com/rmnoff/fasthttp-routing/v3/auth) | provides authentication via token-based query parameter
+[auth.JWT](https://godoc.org/github.com/rmnoff/fasthttp-routing/v3/auth) | provides JWT-based authentication
+[content.TypeNegotiator](https://godoc.org/github.com/rmnoff/fasthttp-routing/v3/content) | supports content negotiation by response types
+[content.LanguageNegotiator](https://godoc.org/github.com/rmnoff/fasthttp-routing/v3/content) | supports content negotiation by accepted languages
+[cors.Handler](https://godoc.org/github.com/rmnoff/fasthttp-routing/v3/cors) | implements the CORS (Cross Origin Resource Sharing) specification from the W3C
+[fault.Recovery](https://godoc.org/github.com/rmnoff/fasthttp-routing/v3/fault) | recovers from panics and handles errors returned by handlers
+[fault.PanicHandler](https://godoc.org/github.com/rmnoff/fasthttp-routing/v3/fault) | recovers from panics happened in the handlers
+[fault.ErrorHandler](https://godoc.org/github.com/rmnoff/fasthttp-routing/v3/fault) | handles errors returned by handlers by writing them in an appropriate format to the response
+[file.Server](https://godoc.org/github.com/rmnoff/fasthttp-routing/v3/file) | serves the files under the specified folder as response content
+[file.Content](https://godoc.org/github.com/rmnoff/fasthttp-routing/v3/file) | serves the content of the specified file as the response
+[slash.Remover](https://godoc.org/github.com/rmnoff/fasthttp-routing/v3/slash) | removes the trailing slashes from the request URL and redirects to the proper URL
 
 The following code shows how these handlers may be used:
 
@@ -390,10 +390,10 @@ The following code shows how these handlers may be used:
 import (
 	"log"
 
-	"github.com/rmnoff/fasthttp-routing"
-	"github.com/rmnoff/fasthttp-routing/access"
-	"github.com/rmnoff/fasthttp-routing/fault"
-	"github.com/rmnoff/fasthttp-routing/slash"
+	"github.com/rmnoff/fasthttp-routing/v3"
+	"github.com/rmnoff/fasthttp-routing/v3/access"
+	"github.com/rmnoff/fasthttp-routing/v3/fault"
+	"github.com/rmnoff/fasthttp-routing/v3/slash"
 	"github.com/valyala/fasthttp"
 )
 
