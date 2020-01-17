@@ -64,7 +64,7 @@ type JSONDataWriter struct{}
 
 // SetHeader sets the "Content-Type" response header as "application/json".
 func (w *JSONDataWriter) SetHeader(h *fasthttp.ResponseHeader) {
-	h.SetContentType(JSON)
+	h.SetContentType(JSON + "; charset=UTF-8")
 }
 
 func (w *JSONDataWriter) Write(res io.Writer, data interface{}) (err error) {
